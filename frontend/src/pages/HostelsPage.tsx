@@ -4,7 +4,8 @@ import { hostelsApi } from '../api/hostelsApi';
 import { HostelSummary } from '../types/hostel';
 import { HostelCard } from '../components/hostel/HostelCard';
 import { Spinner } from '../components/common/Spinner';
-import { Search, Building, Sparkles } from 'lucide-react';
+import { Search, Building, Sparkles, AlertTriangle, RotateCw } from 'lucide-react';
+import { Button } from '../components/common/Button';
 
 export const HostelsPage: React.FC = () => {
   const [hostels, setHostels] = useState<HostelSummary[]>([]);
@@ -13,7 +14,7 @@ export const HostelsPage: React.FC = () => {
   const [genderFilter, setGenderFilter] = useState<'ALL' | 'MALE' | 'FEMALE'>('ALL');
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
+  const loadHostels = () => {
     setIsLoading(true);
     hostelsApi
       .getHostels(genderFilter !== 'ALL' ? { gender: genderFilter } : undefined)
@@ -23,6 +24,10 @@ export const HostelsPage: React.FC = () => {
       })
       .catch((err) => setError(err.message || 'Failed to load hostels.'))
       .finally(() => setIsLoading(false));
+  };
+
+  useEffect(() => {
+    loadHostels();
   }, [genderFilter]);
 
   const filteredHostels = hostels.filter((h) => {
@@ -131,8 +136,21 @@ export const HostelsPage: React.FC = () => {
       {isLoading ? (
         <Spinner label="Loading campus hostel directory..." />
       ) : error ? (
-        <div className="p-8 text-center text-red-600 bg-surface border border-border rounded-xl">
-          {error}
+        <div className="p-8 text-center bg-surface border border-border rounded-xl shadow-xs">
+          <div className="inline-flex p-3 rounded-full bg-amber-50 text-amber-700 mb-3 border border-amber-200">
+            <AlertTriangle size={24} />
+          </div>
+          <h3 className="font-serif text-lg font-semibold text-ink m-0 mb-1">
+            Backend API Connection Notice
+          </h3>
+          <p className="text-xs text-text-muted m-0 mb-4 max-w-md mx-auto leading-relaxed">
+            Unable to connect to the Django API service at <code className="font-mono bg-stone-100 px-1 py-0.5 rounded">http://127.0.0.1:8000</code>.
+            Ensure the backend development server is running via <code className="font-mono bg-stone-100 px-1 py-0.5 rounded">python manage.py runserver</code>.
+          </p>
+          <Button variant="secondary" size="sm" onClick={loadHostels} className="inline-flex items-center gap-1.5">
+            <RotateCw size={13} />
+            Retry Connection
+          </Button>
         </div>
       ) : filteredHostels.length === 0 ? (
         <motion.div

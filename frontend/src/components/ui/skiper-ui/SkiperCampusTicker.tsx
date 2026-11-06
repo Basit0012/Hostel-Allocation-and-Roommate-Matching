@@ -68,7 +68,6 @@ export const SkiperCampusTicker: React.FC = () => {
           ease: 'linear',
           duration: 35,
         }}
-        whileHover={{ animationPlayState: 'paused' }}
       >
         {duplicatedItems.map((item, idx) => {
           const Icon = item.icon;
@@ -93,3 +92,4 @@ export const SkiperCampusTicker: React.FC = () => {
     </div>
   );
 };
+

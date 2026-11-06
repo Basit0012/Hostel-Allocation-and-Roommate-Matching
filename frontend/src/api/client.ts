@@ -59,12 +59,19 @@ export async function apiClient<T>(endpoint: string, options: RequestOptions = {
     }
   }
 
-  const response = await fetch(url, {
-    ...options,
-    method,
-    headers,
-    credentials: 'include',
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      method,
+      headers,
+      credentials: 'include',
+    });
+  } catch {
+    throw new Error(
+      'Unable to connect to backend server at http://127.0.0.1:8000. Please ensure python manage.py runserver is running.'
+    );
+  }
 
   const contentType = response.headers.get('content-type') || '';
   const isJson = contentType.includes('application/json');

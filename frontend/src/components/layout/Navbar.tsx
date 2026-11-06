@@ -25,7 +25,7 @@ export const Navbar: React.FC = () => {
     }`;
 
   return (
-    <header className="sticky top-0 z-50 bg-ink text-white border-b-3 border-brand shadow-sm">
+    <header className="sticky top-0 z-50 bg-ink text-white border-b-[3px] border-brand shadow-sm">
       <div className="container flex items-center justify-between h-16">
         {/* Official LPU Typographic Mark with subtle motion */}
         <Link to="/" className="flex flex-col no-underline text-white group">
