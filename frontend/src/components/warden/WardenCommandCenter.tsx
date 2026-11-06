@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import { livingApi } from '../../api/livingApi';
 import { hostelsApi } from '../../api/hostelsApi';
 import { GatePassItem, RMSTicketItem } from '../../types/living';
@@ -236,64 +237,70 @@ export const WardenCommandCenter: React.FC<WardenCommandCenterProps> = ({ userEm
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {pendingPasses.map((p) => (
-                <div
-                  key={p.id}
-                  style={{
-                    padding: '0.85rem 1rem',
-                    backgroundColor: '#FAF8F5',
-                    border: '1px solid var(--border)',
-                    borderRadius: '2px',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.35rem' }}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <span style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '0.875rem' }}>
-                          {(p as any).student_name || 'Resident'}
-                        </span>
-                        <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                          #{(p as any).student_id || 'N/A'}
-                        </span>
-                        <Badge variant="neutral" size="sm">{p.pass_type_display}</Badge>
-                      </div>
-                      <div style={{ fontSize: '0.8125rem', color: 'var(--ink)', marginTop: '0.2rem' }}>
-                        Destination: <strong>{p.destination}</strong>
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        Reason: &ldquo;{p.reason}&rdquo;
+              <AnimatePresence>
+                {pendingPasses.map((p) => (
+                  <motion.div
+                    key={p.id}
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -30, transition: { duration: 0.2 } }}
+                    style={{
+                      padding: '0.85rem 1rem',
+                      backgroundColor: '#FAF8F5',
+                      border: '1px solid var(--border)',
+                      borderRadius: '2px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.35rem' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '0.875rem' }}>
+                            {(p as any).student_name || 'Resident'}
+                          </span>
+                          <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            #{(p as any).student_id || 'N/A'}
+                          </span>
+                          <Badge variant="neutral" size="sm">{p.pass_type_display}</Badge>
+                        </div>
+                        <div style={{ fontSize: '0.8125rem', color: 'var(--ink)', marginTop: '0.2rem' }}>
+                          Destination: <strong>{p.destination}</strong>
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          Reason: &ldquo;{p.reason}&rdquo;
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', borderTop: '1px dashed var(--border)', paddingTop: '0.35rem', marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>
-                      Schedule: {new Date(p.departure_date).toLocaleDateString()} — {new Date(p.expected_return_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
+                    <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', borderTop: '1px dashed var(--border)', paddingTop: '0.35rem', marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>
+                        Schedule: {new Date(p.departure_date).toLocaleDateString()} — {new Date(p.expected_return_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
 
-                    <div style={{ display: 'flex', gap: '0.4rem' }}>
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        disabled={actionLoadingId === p.id}
-                        onClick={() => handleApprovePass(p.id)}
-                      >
-                        <CheckCircle size={12} style={{ marginRight: '0.2rem' }} />
-                        Approve
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        disabled={actionLoadingId === p.id}
-                        onClick={() => handleRejectPass(p.id)}
-                      >
-                        <XCircle size={12} style={{ marginRight: '0.2rem' }} />
-                        Reject
-                      </Button>
+                      <div style={{ display: 'flex', gap: '0.4rem' }}>
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          disabled={actionLoadingId === p.id}
+                          onClick={() => handleApprovePass(p.id)}
+                        >
+                          <CheckCircle size={12} style={{ marginRight: '0.2rem' }} />
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={actionLoadingId === p.id}
+                          onClick={() => handleRejectPass(p.id)}
+                        >
+                          <XCircle size={12} style={{ marginRight: '0.2rem' }} />
+                          Reject
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ))}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           )}
         </div>

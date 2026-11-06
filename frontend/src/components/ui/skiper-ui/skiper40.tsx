@@ -2,18 +2,42 @@
 
 import { Link } from "react-router-dom";
 import React from "react";
-
 import { cn } from "@/lib/utils";
+
+const InteractiveAnchor = ({
+  href,
+  className,
+  children,
+  target,
+}: {
+  href: string;
+  className?: string;
+  children: React.ReactNode;
+  target?: string;
+}) => {
+  if (href.startsWith("/")) {
+    return (
+      <Link to={href} className={className}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <a href={href} className={className} target={target} rel={target === "_blank" ? "noopener noreferrer" : undefined}>
+      {children}
+    </a>
+  );
+};
 
 const Skiper40 = () => {
   return (
     <section className="h-full snap-y snap-mandatory overflow-y-scroll">
       <div className="relative flex h-full w-full flex-col items-center justify-center gap-5">
-        <Link001 href="mailto:hi@skiper-ui.com">hi@skiper-ui.com</Link001>
-        <Link002 href="mailto:hi@skiper-ui.com">hi@skiper-ui.com</Link002>
-        <Link003 href="mailto:hi@skiper-ui.com">hi@skiper-ui.com</Link003>
-        <Link004 href="mailto:hi@skiper-ui.com">hi@skiper-ui.com</Link004>
-        <Link005 href="mailto:hi@skiper-ui.com">hi@skiper-ui.com</Link005>
+        <Link001 href="/hostels">Explore Hostels</Link001>
+        <Link002 href="/rooms">Browse Catalog</Link002>
+        <Link003 href="/apply">Apply for Room</Link003>
+        <Link004 href="/roommates">Match Roommates</Link004>
+        <Link005 href="/dashboard">Resident Dashboard</Link005>
       </div>
     </section>
   );
@@ -31,8 +55,8 @@ const Link000 = ({
   className?: string;
 }) => {
   return (
-    <Link
-      to={href}
+    <InteractiveAnchor
+      href={href}
       className={cn(
         "group relative flex items-center",
         className,
@@ -42,9 +66,10 @@ const Link000 = ({
       )}
     >
       {children}
-    </Link>
+    </InteractiveAnchor>
   );
 };
+
 const Link001 = ({
   children,
   href,
@@ -55,9 +80,8 @@ const Link001 = ({
   className?: string;
 }) => {
   return (
-    <a
+    <InteractiveAnchor
       href={href}
-      target="_blank"
       className={cn(
         "group relative flex items-center",
         "before:pointer-events-none before:absolute before:left-0 before:top-[1.5em] before:h-[0.05em] before:w-full before:bg-current before:content-['']",
@@ -82,9 +106,10 @@ const Link001 = ({
           strokeLinejoin="round"
         ></path>
       </svg>
-    </a>
+    </InteractiveAnchor>
   );
 };
+
 const Link002 = ({
   children,
   href,
@@ -95,7 +120,7 @@ const Link002 = ({
   className?: string;
 }) => {
   return (
-    <a
+    <InteractiveAnchor
       href={href}
       className={cn(
         "group relative flex items-center",
@@ -122,9 +147,10 @@ const Link002 = ({
           strokeLinejoin="round"
         ></path>
       </svg>
-    </a>
+    </InteractiveAnchor>
   );
 };
+
 const Link003 = ({
   children,
   href,
@@ -135,7 +161,7 @@ const Link003 = ({
   className?: string;
 }) => {
   return (
-    <a
+    <InteractiveAnchor
       href={href}
       className={cn(
         "group relative flex items-center",
@@ -162,7 +188,7 @@ const Link003 = ({
           strokeLinejoin="round"
         ></path>
       </svg>
-    </a>
+    </InteractiveAnchor>
   );
 };
 
@@ -176,7 +202,7 @@ const Link004 = ({
   className?: string;
 }) => {
   return (
-    <a
+    <InteractiveAnchor
       href={href}
       className={cn(
         "group relative flex items-center",
@@ -203,9 +229,10 @@ const Link004 = ({
           strokeLinejoin="round"
         ></path>
       </svg>
-    </a>
+    </InteractiveAnchor>
   );
 };
+
 const Link005 = ({
   children,
   href,
@@ -216,7 +243,7 @@ const Link005 = ({
   className?: string;
 }) => {
   return (
-    <a
+    <InteractiveAnchor
       href={href}
       className={cn(
         className,
@@ -243,24 +270,6 @@ const Link005 = ({
           strokeLinejoin="round"
         ></path>
       </svg>
-    </a>
+    </InteractiveAnchor>
   );
 };
-
-/**
- * Skiper 40 Animated Link — React
- * Inspired by and adapted from https://cursor.com/?from=home
- * We respect the original creators. This is an inspired rebuild with our own taste and does not claim any ownership.
- * These animations aren’t associated with the cursor.com . They’re independent recreations meant to study interaction design
- *
- * License & Usage:
- * - Free to use and modify in both personal and commercial projects.
- * - Attribution to Skiper UI is required when using the free version.
- * - No attribution required with Skiper UI Pro.
- *
- * Feedback and contributions are welcome.
- *
- * Author: @gurvinder-singh02
- * Website: https://gxuri.me
- * Twitter: https://x.com/Gur__vi
- */

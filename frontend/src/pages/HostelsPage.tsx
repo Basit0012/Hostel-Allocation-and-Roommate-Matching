@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { hostelsApi } from '../api/hostelsApi';
 import { HostelSummary } from '../types/hostel';
 import { HostelCard } from '../components/hostel/HostelCard';
 import { Spinner } from '../components/common/Spinner';
+import { Search, Building, Sparkles } from 'lucide-react';
 
 export const HostelsPage: React.FC = () => {
   const [hostels, setHostels] = useState<HostelSummary[]>([]);
@@ -29,150 +31,135 @@ export const HostelsPage: React.FC = () => {
     return h.name.toLowerCase().includes(term) || h.code.toLowerCase().includes(term);
   });
 
+  const filterTabs = [
+    { key: 'ALL', label: 'All 14 Residential Complexes' },
+    { key: 'MALE', label: 'Boys Towers (BH-1 to BH-8)' },
+    { key: 'FEMALE', label: 'Girls Towers (GH-1 to GH-6)' },
+  ];
+
+  const gridVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 16 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: 'spring' as const,
+        stiffness: 280,
+        damping: 24,
+      },
+    },
+  };
+
   return (
-    <div className="container">
+    <div className="container py-6">
       {/* Header */}
-      <div style={{ marginBottom: '2rem' }}>
-        <h1
-          style={{
-            fontFamily: 'var(--font-serif)',
-            fontSize: '2rem',
-            fontWeight: 600,
-            color: 'var(--ink)',
-            margin: '0 0 0.5rem',
-            letterSpacing: '-0.01em',
-          }}
-        >
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="mb-6"
+      >
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary mb-1">
+          <Building size={14} />
+          Official Campus Housing Registry
+        </div>
+        <h1 className="text-3xl font-serif font-semibold text-ink tracking-tight m-0 mb-2">
           Campus Hostels Directory
         </h1>
-        <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9375rem' }}>
-          Authoritative residential tower registry, facility matrices, and live room occupancy across all campus complexes.
+        <p className="text-sm text-text-muted m-0 max-w-2xl">
+          Authoritative residential tower registry, 2D vector CAD floor plans, and live vacancy status across all 14 LPU complexes.
         </p>
-      </div>
+      </motion.div>
 
       {/* Filter and Search Bar */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '1rem',
-          flexWrap: 'wrap',
-          marginBottom: '2rem',
-          padding: '1rem 1.25rem',
-          backgroundColor: 'var(--surface)',
-          borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--border)',
-        }}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+        className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 mb-8 p-3.5 bg-surface rounded-xl border border-border shadow-xs"
       >
-        {/* Gender Filter Buttons */}
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {[
-            { key: 'ALL', label: 'All Residential Complexes' },
-            { key: 'MALE', label: 'Boys Hostels (BH-1 to BH-8)' },
-            { key: 'FEMALE', label: 'Girls Hostels (GH-1 to GH-6)' },
-          ].map((btn) => {
+        {/* Gender Filter Buttons with Motion Spring Pill */}
+        <div className="flex gap-1.5 flex-wrap">
+          {filterTabs.map((btn) => {
             const isActive = genderFilter === btn.key;
             return (
               <button
                 key={btn.key}
                 type="button"
                 onClick={() => setGenderFilter(btn.key as 'ALL' | 'MALE' | 'FEMALE')}
-                style={{
-                  padding: '0.5rem 0.875rem',
-                  borderRadius: 'var(--radius-sm)',
-                  fontSize: '0.8125rem',
-                  fontWeight: 600,
-                  border: '1px solid',
-                  borderColor: isActive ? 'var(--primary)' : 'var(--border-strong)',
-                  backgroundColor: isActive ? 'var(--primary)' : 'var(--surface)',
-                  color: isActive ? '#ffffff' : 'var(--text)',
-                  cursor: 'pointer',
-                  transition: 'background var(--transition-fast)',
-                }}
+                className={`relative px-3.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors ${
+                  isActive ? 'text-white' : 'text-text hover:text-ink hover:bg-black/5'
+                }`}
               >
-                {btn.label}
+                {isActive && (
+                  <motion.div
+                    layoutId="activeHostelFilter"
+                    className="absolute inset-0 bg-primary rounded-lg shadow-xs"
+                    transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{btn.label}</span>
               </button>
             );
           })}
         </div>
 
         {/* Quick Search Input */}
-        <div style={{ minWidth: '240px', flex: '0 1 300px' }}>
+        <div className="relative min-w-[240px] sm:w-72">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
           <input
             type="text"
-            placeholder="Search by block name or code (e.g. BH-1)..."
+            placeholder="Search block or code (e.g. BH-1)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: '100%',
-              height: '38px',
-              padding: '0 0.875rem',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-strong)',
-              backgroundColor: 'var(--surface)',
-              color: 'var(--ink)',
-              fontSize: '0.875rem',
-              outline: 'none',
-              boxSizing: 'border-box',
-            }}
+            className="w-full h-9 pl-9 pr-3 rounded-lg border border-border bg-surface text-ink text-xs placeholder:text-text-muted focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand"
           />
         </div>
-      </div>
+      </motion.div>
 
       {/* Content */}
       {isLoading ? (
         <Spinner label="Loading campus hostel directory..." />
       ) : error ? (
-        <div
-          style={{
-            padding: '2rem',
-            textAlign: 'center',
-            color: 'var(--status-danger)',
-            backgroundColor: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-md)',
-          }}
-        >
+        <div className="p-8 text-center text-red-600 bg-surface border border-border rounded-xl">
           {error}
         </div>
       ) : filteredHostels.length === 0 ? (
-        <div
-          style={{
-            padding: '3rem 2rem',
-            textAlign: 'center',
-            backgroundColor: 'var(--surface)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border)',
-          }}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="p-12 text-center bg-surface rounded-xl border border-border"
         >
-          <h3
-            style={{
-              fontFamily: 'var(--font-serif)',
-              fontSize: '1.25rem',
-              fontWeight: 600,
-              color: 'var(--ink)',
-              margin: '0 0 0.5rem',
-            }}
-          >
+          <h3 className="font-serif text-lg font-semibold text-ink m-0 mb-1">
             No Residential Complexes Found
           </h3>
-          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+          <p className="text-xs text-text-muted m-0">
             No hostel records match your current gender filter or search keyword.
           </p>
-        </div>
+        </motion.div>
       ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-            gap: '1.5rem',
-          }}
+        <motion.div
+          variants={gridVariants}
+          initial="hidden"
+          animate="visible"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           {filteredHostels.map((hostel) => (
-            <HostelCard key={hostel.id} hostel={hostel} />
+            <motion.div key={hostel.id} variants={itemVariants}>
+              <HostelCard hostel={hostel} />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
     </div>
   );
