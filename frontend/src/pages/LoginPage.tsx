@@ -191,6 +191,21 @@ export const LoginPage: React.FC = () => {
             </button>
             <button
               type="button"
+              onClick={() => handleQuickFill('warden.boys@lpu.in', 'Password123!')}
+              style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--border-strong)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '0.25rem 0.5rem',
+                fontSize: '0.75rem',
+                color: 'var(--text)',
+                cursor: 'pointer',
+              }}
+            >
+              Hostel Warden
+            </button>
+            <button
+              type="button"
               onClick={() => handleQuickFill('admin@lpu.in', 'Password123!')}
               style={{
                 background: 'var(--surface)',
