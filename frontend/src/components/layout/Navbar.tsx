@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
 import { EconomicsCalculatorModal } from '../economics/EconomicsCalculatorModal';
-import { Calculator } from 'lucide-react';
+import { Calculator, Sparkles } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -16,121 +17,66 @@ export const Navbar: React.FC = () => {
     navigate('/login');
   };
 
-  const navLinkStyle = ({ isActive }: { isActive: boolean }): React.CSSProperties => ({
-    textDecoration: 'none',
-    color: isActive ? '#FFFFFF' : '#DDD8CF',
-    fontWeight: isActive ? 600 : 500,
-    fontSize: '0.875rem',
-    fontFamily: 'var(--font-sans)',
-    padding: '0.375rem 0.625rem',
-    borderRadius: 'var(--radius-md)',
-    backgroundColor: isActive ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-    borderBottom: isActive ? '2px solid var(--brand)' : '2px solid transparent',
-    transition: 'color var(--transition-fast), background-color var(--transition-fast)',
-  });
+  const navLinkClass = ({ isActive }: { isActive: boolean }): string =>
+    `no-underline text-sm font-medium px-3 py-1.5 rounded-md transition-all duration-200 ${
+      isActive
+        ? 'text-white bg-white/10 border-b-2 border-brand font-semibold shadow-xs'
+        : 'text-[#DDD8CF] hover:text-white hover:bg-white/5 border-b-2 border-transparent'
+    }`;
 
   return (
-    <header
-      style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        backgroundColor: 'var(--ink)',
-        color: '#FFFFFF',
-        borderBottom: '3px solid var(--brand)',
-      }}
-    >
-      <div
-        className="container"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          height: '4rem',
-        }}
-      >
-        {/* Official LPU Typographic Mark */}
-        <Link
-          to="/"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            textDecoration: 'none',
-            color: '#FFFFFF',
-          }}
-        >
-          <span
-            style={{
-              fontFamily: 'var(--font-sans)',
-              fontWeight: 700,
-              fontSize: '0.875rem',
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              color: '#FFFFFF',
-              lineHeight: 1.2,
-            }}
+    <header className="sticky top-0 z-50 bg-ink text-white border-b-3 border-brand shadow-sm">
+      <div className="container flex items-center justify-between h-16">
+        {/* Official LPU Typographic Mark with subtle motion */}
+        <Link to="/" className="flex flex-col no-underline text-white group">
+          <motion.div
+            whileHover={{ x: 2 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            className="flex flex-col"
           >
-            Lovely Professional University
-          </span>
-          <span
-            style={{
-              fontFamily: 'var(--font-serif)',
-              fontSize: '0.8125rem',
-              color: '#DDD8CF',
-              fontStyle: 'italic',
-              lineHeight: 1.2,
-            }}
-          >
-            Residential Accommodation Portal
-          </span>
+            <span className="font-sans font-bold text-sm tracking-widest uppercase text-white leading-tight flex items-center gap-2">
+              Lovely Professional University
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand group-hover:scale-150 transition-transform" />
+            </span>
+            <span className="font-serif text-xs text-[#DDD8CF] italic leading-tight">
+              Residential Accommodation Portal
+            </span>
+          </motion.div>
         </Link>
 
         {/* Desktop Nav Links */}
-        <nav
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-          }}
-          className="desktop-nav"
-        >
-          <NavLink to="/hostels" style={navLinkStyle}>
+        <nav className="hidden md:flex items-center gap-1">
+          <NavLink to="/hostels" className={navLinkClass}>
             Explore Hostels
           </NavLink>
-          <NavLink to="/rooms" style={navLinkStyle}>
+          <NavLink to="/rooms" className={navLinkClass}>
             Room Catalog
           </NavLink>
-          <button
+
+          <motion.button
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
             type="button"
             onClick={() => setIsCalcOpen(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-              background: 'none',
-              border: 'none',
-              color: '#DDD8CF',
-              fontWeight: 500,
-              fontSize: '0.875rem',
-              fontFamily: 'var(--font-sans)',
-              padding: '0.375rem 0.625rem',
-              borderRadius: 'var(--radius-md)',
-              cursor: 'pointer',
-              transition: 'color var(--transition-fast)',
-            }}
+            className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-md bg-orange-500/15 text-orange-300 border border-orange-500/30 hover:bg-orange-500/25 transition-colors cursor-pointer ml-1"
           >
-            <Calculator size={13} color="var(--brand)" />
+            <Calculator size={14} className="text-brand" />
             Fee Simulator
-          </button>
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-brand"></span>
+            </span>
+          </motion.button>
+
           {isAuthenticated && (
             <>
-              <NavLink to="/roommates" style={navLinkStyle}>
+              <NavLink to="/roommates" className={navLinkClass}>
                 Roommates
               </NavLink>
-              <NavLink to="/apply" style={navLinkStyle}>
+              <NavLink to="/apply" className={navLinkClass}>
                 Apply
               </NavLink>
-              <NavLink to="/dashboard" style={navLinkStyle}>
+              <NavLink to="/dashboard" className={navLinkClass}>
                 Dashboard
               </NavLink>
             </>
@@ -138,48 +84,54 @@ export const Navbar: React.FC = () => {
         </nav>
 
         {/* User / Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div className="flex items-center gap-3">
           {isAuthenticated && user ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#FFFFFF' }}>
+            <div className="flex items-center gap-3">
+              <div className="text-right flex flex-col gap-0.5">
+                <span className="text-xs md:text-sm font-semibold text-white">
                   {user.student ? user.student.full_name : user.email.split('@')[0]}
                 </span>
-                <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                <div className="flex gap-1.5 justify-end items-center">
                   <Badge variant={user.role === 'STUDENT' ? 'info' : 'warning'} size="sm">
                     {user.role}
                   </Badge>
                   {user.student && (
-                    <span style={{ fontSize: '0.6875rem', color: '#DDD8CF', fontFamily: 'var(--font-sans)' }} className="tabular-nums">
+                    <span className="text-[11px] text-[#DDD8CF] font-sans tabular-nums">
                       #{user.student.student_id}
                     </span>
                   )}
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleLogout}
-                style={{ color: '#FFFFFF', borderColor: '#5C5750', height: '32px' }}
-              >
-                Sign Out
-              </Button>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Link to="/login" style={{ textDecoration: 'none' }}>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button
                   variant="outline"
                   size="sm"
-                  style={{ color: '#FFFFFF', borderColor: '#5C5750', height: '32px' }}
+                  onClick={handleLogout}
+                  className="text-white border-[#5C5750] h-8 text-xs"
                 >
-                  Sign In
+                  Sign Out
                 </Button>
+              </motion.div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link to="/login" className="no-underline">
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-white border-[#5C5750] h-8 text-xs"
+                  >
+                    Sign In
+                  </Button>
+                </motion.div>
               </Link>
-              <Link to="/register" style={{ textDecoration: 'none' }}>
-                <Button variant="primary" size="sm" style={{ height: '32px' }}>
-                  Claim Account
-                </Button>
+              <Link to="/register" className="no-underline">
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button variant="primary" size="sm" className="h-8 text-xs">
+                    Claim Account
+                  </Button>
+                </motion.div>
               </Link>
             </div>
           )}
