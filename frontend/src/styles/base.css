@@ -1,6 +1,29 @@
 @import "tailwindcss";
 @import './variables.css';
 
+@theme {
+  --color-brand: var(--brand);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-ink: var(--ink);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-status-success: var(--status-success);
+  --color-status-success-bg: var(--status-success-bg);
+  --color-status-pending: var(--status-pending);
+  --color-status-pending-bg: var(--status-pending-bg);
+  --color-status-danger: var(--status-danger);
+  --color-status-danger-bg: var(--status-danger-bg);
+
+  --font-serif: var(--font-serif);
+  --font-sans: var(--font-sans);
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -33,20 +56,19 @@ body {
 
 .container {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1320px;
   margin: 0 auto;
-  padding: 0 var(--space-md);
+  padding: 0 1.5rem;
 }
 
 a {
-  color: var(--primary);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  color: inherit;
+  text-decoration: none;
   transition: color var(--transition-fast);
 }
 
 a:hover {
-  color: var(--primary-hover);
+  color: var(--primary);
 }
 
 h1, h2, h3, h4, h5, h6 {

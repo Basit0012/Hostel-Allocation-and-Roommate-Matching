@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { motion } from 'motion/react';
 import { FloorRoomDetail } from '../../types/hostel';
 import { Compass, Bed, Wind, Snowflake, Layers, CheckCircle, AlertCircle, Eye } from 'lucide-react';
 
@@ -531,10 +532,13 @@ const RoomArchitecturalCell: React.FC<RoomArchitecturalCellProps> = ({
   const isAvailable = room.vacant_beds_count > 0;
 
   return (
-    <div
+    <motion.div
       onClick={onSelect}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      whileHover={{ y: -3, scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: 'spring', stiffness: 350, damping: 25 }}
       style={{
         position: 'relative',
         backgroundColor: isSelected ? '#FFF8F3' : isHovered ? '#FFFFFF' : '#FBF9F5',
@@ -548,11 +552,10 @@ const RoomArchitecturalCell: React.FC<RoomArchitecturalCellProps> = ({
         borderRadius: '2px',
         padding: '0.75rem',
         cursor: 'pointer',
-        transition: 'all 120ms ease-out',
         boxShadow: isSelected
           ? '0 0 0 3px rgba(194, 65, 12, 0.15)'
           : isHovered
-          ? '0 2px 8px rgba(0, 0, 0, 0.08)'
+          ? '0 4px 12px rgba(0, 0, 0, 0.08)'
           : 'none',
       }}
     >
@@ -751,6 +754,6 @@ const RoomArchitecturalCell: React.FC<RoomArchitecturalCellProps> = ({
           </span>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };

@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'motion/react';
 import { RoommatePreferences } from '../../types/roommate';
 import { Sparkles, AlertTriangle, CheckCircle } from 'lucide-react';
 
@@ -136,7 +137,10 @@ export const RoommateHarmonyRadar: React.FC<RoommateHarmonyRadarProps> = ({
           </div>
         </div>
 
-        <div
+        <motion.div
+          initial={{ scale: 0.85, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 350, damping: 25 }}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -157,7 +161,7 @@ export const RoommateHarmonyRadar: React.FC<RoommateHarmonyRadarProps> = ({
           >
             {matchPct}% Match
           </span>
-        </div>
+        </motion.div>
       </div>
 
       {/* Radar SVG Visualizer */}
@@ -191,8 +195,12 @@ export const RoommateHarmonyRadar: React.FC<RoommateHarmonyRadarProps> = ({
             );
           })}
 
-          {/* Candidate Profile Polygon */}
-          <polygon
+          {/* Candidate Profile Polygon with Motion Reveal */}
+          <motion.polygon
+            initial={{ opacity: 0, scale: 0.3 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: 'spring', stiffness: 220, damping: 22, delay: 0.1 }}
+            style={{ transformOrigin: `${center}px ${center}px` }}
             points={polygonPoints}
             fill="rgba(194, 65, 12, 0.2)"
             stroke="var(--primary)"
@@ -203,11 +211,14 @@ export const RoommateHarmonyRadar: React.FC<RoommateHarmonyRadarProps> = ({
           {breakdown.map((d, i) => {
             const { x, y } = getCoordinates(i, d.theirScore);
             return (
-              <circle
+              <motion.circle
                 key={i}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.15 + i * 0.04 }}
                 cx={x}
                 cy={y}
-                r="3"
+                r="3.5"
                 fill={d.aligned ? '#1E6B3A' : 'var(--primary)'}
                 stroke="#fff"
                 strokeWidth="1.2"

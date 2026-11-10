@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { CandidateMatch } from '../../types/roommate';
 import { Card } from '../common/Card';
 import { Badge } from '../common/Badge';
@@ -21,137 +22,110 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
   const score = candidate.score ? Math.round(candidate.score) : null;
 
   return (
-    <Card hoverable style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* Compatibility Text & Bar (DESIGN.md section 6 rule) */}
-      <div style={{ marginBottom: '1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.375rem' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            Lifestyle Compatibility
-          </span>
-          <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '0.9375rem', color: 'var(--primary)' }} className="tabular-nums">
-            {score !== null ? `${score}% Match` : 'Evaluation Pending'}
-          </span>
-        </div>
-        {/* Simple geometric horizontal progress bar */}
-        <div
-          style={{
-            height: '4px',
-            backgroundColor: 'var(--border)',
-            borderRadius: 'var(--radius-sm)',
-            overflow: 'hidden',
-          }}
-        >
-          <div
-            style={{
-              width: `${score || 0}%`,
-              height: '100%',
-              backgroundColor: 'var(--primary)',
-              transition: 'width 300ms ease',
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Candidate Name & ID */}
-      <div style={{ marginBottom: '0.75rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <h4 style={{ margin: '0 0 0.25rem', fontSize: '1.125rem', fontFamily: 'var(--font-serif)', fontWeight: 600, color: 'var(--ink)' }}>
-            {candidate.full_name}
-          </h4>
-          {candidate.is_room_aligned && (
-            <Badge variant="success" size="sm">
-              Same Room Target
-            </Badge>
-          )}
-        </div>
-        <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-          ID: <strong style={{ color: 'var(--text)' }} className="tabular-nums">{candidate.student_id}</strong>
-        </div>
-      </div>
-
-      {/* Academic Info */}
-      <div
-        style={{
-          fontSize: '0.8125rem',
-          color: 'var(--text)',
-          backgroundColor: '#FAF8F3',
-          border: '1px solid var(--border)',
-          padding: '0.625rem 0.75rem',
-          borderRadius: 'var(--radius-md)',
-          marginBottom: '1rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-        }}
-      >
-        <span>{candidate.branch || 'Undergraduate'}</span>
-        {candidate.cgpa && (
-          <span>
-            CGPA: <strong className="tabular-nums">{candidate.cgpa.toFixed(2)}</strong>
-          </span>
-        )}
-      </div>
-
-      {/* Target Room Choice */}
-      {candidate.target_room && (
-        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
-          Preferred Room: <strong>{candidate.target_room}</strong>
-        </div>
-      )}
-
-      {/* 7-Factor Radar Trigger */}
-      {score !== null && (
-        <div style={{ marginBottom: '0.75rem' }}>
-          <button
-            type="button"
-            onClick={() => setShowRadar(!showRadar)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              width: '100%',
-              padding: '0.35rem 0.65rem',
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              color: 'var(--primary)',
-              backgroundColor: '#FFF7ED',
-              border: '1px solid #FFEDD5',
-              borderRadius: '2px',
-              cursor: 'pointer',
-            }}
-          >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-              <Sparkles size={12} />
-              7-Factor Lifestyle Radar
+    <motion.div
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className="h-full flex flex-col"
+    >
+      <Card hoverable className="flex flex-col h-full bg-surface">
+        {/* Compatibility Text & Bar */}
+        <div className="mb-4">
+          <div className="flex justify-between items-baseline mb-1.5">
+            <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+              Lifestyle Compatibility
             </span>
-            {showRadar ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </button>
+            <span className="font-sans font-bold text-sm text-primary tabular-nums">
+              {score !== null ? `${score}% Match` : 'Evaluation Pending'}
+            </span>
+          </div>
+          {/* Animated geometric horizontal progress bar */}
+          <div className="h-1.5 bg-border rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${score || 0}%` }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+              className="h-full bg-primary rounded-full"
+            />
+          </div>
+        </div>
 
-          {showRadar && (
-            <div style={{ marginTop: '0.5rem' }}>
-              <RoommateHarmonyRadar score={score} compact />
-            </div>
+        {/* Candidate Name & ID */}
+        <div className="mb-3">
+          <div className="flex justify-between items-baseline">
+            <h4 className="m-0 mb-1 text-lg font-serif font-semibold text-ink">
+              {candidate.full_name}
+            </h4>
+            <span className="text-xs font-mono text-text-muted">
+              #{candidate.student_id}
+            </span>
+          </div>
+          <div className="text-xs text-text-muted">
+            {candidate.branch} {candidate.cgpa !== null && `• CGPA: ${candidate.cgpa.toFixed(2)}`}
+          </div>
+        </div>
+
+        {/* Badges / Factors */}
+        <div className="flex flex-wrap gap-1 mb-4">
+          <Badge variant="neutral" size="sm">{candidate.branch}</Badge>
+          {candidate.is_room_aligned && (
+            <Badge variant="success" size="sm">Room Choice Aligned</Badge>
+          )}
+          {candidate.cgpa !== null && candidate.cgpa >= 8.5 && (
+            <Badge variant="info" size="sm">High Academic Merit</Badge>
           )}
         </div>
-      )}
 
-      {/* Action */}
-      <div style={{ marginTop: 'auto', paddingTop: '0.75rem', borderTop: '1px solid var(--border)' }}>
-        {candidate.has_pending_request ? (
-          <Button variant="secondary" size="sm" disabled style={{ width: '100%' }}>
-            Request Pending
-          </Button>
-        ) : (
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => onSendRequest(candidate.student_id)}
-            isLoading={isSending}
-            style={{ width: '100%' }}
-          >
-            Connect / Request Roommate
-          </Button>
+        {/* Interactive 7-Factor Lifestyle Radar Dropdown */}
+        {score !== null && (
+          <div className="mb-4">
+            <button
+              type="button"
+              onClick={() => setShowRadar(!showRadar)}
+              className="flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-semibold text-primary bg-orange-50 border border-orange-200 rounded cursor-pointer transition-colors hover:bg-orange-100"
+            >
+              <span className="flex items-center gap-1.5">
+                <Sparkles size={13} className="text-primary" />
+                7-Factor Lifestyle Harmony Radar
+              </span>
+              {showRadar ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </button>
+
+            <AnimatePresence>
+              {showRadar && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25, ease: 'easeInOut' }}
+                  className="overflow-hidden mt-2"
+                >
+                  <RoommateHarmonyRadar score={score} compact />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         )}
-      </div>
-    </Card>
+
+        {/* Action */}
+        <div className="mt-auto pt-3 border-t border-border">
+          {candidate.has_pending_request ? (
+            <Button variant="secondary" size="sm" disabled className="w-full">
+              Request Pending
+            </Button>
+          ) : (
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => onSendRequest(candidate.student_id)}
+                isLoading={isSending}
+                className="w-full"
+              >
+                Connect / Request Roommate
+              </Button>
+            </motion.div>
+          )}
+        </div>
+      </Card>
+    </motion.div>
   );
 };

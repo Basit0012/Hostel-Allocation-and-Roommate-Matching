@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { roommatesApi, DiscoverResponse, RequestsResponse } from '../api/roommatesApi';
 import { RoommatePreferences, RoommateGroupData } from '../types/roommate';
 import { CandidateCard } from '../components/roommate/CandidateCard';
@@ -151,6 +152,7 @@ export const RoommatesPage: React.FC = () => {
               type="button"
               onClick={() => setActiveTab(tab.key as ActiveTab)}
               style={{
+                position: 'relative',
                 padding: '0.625rem 0.5rem',
                 fontWeight: isActive ? 600 : 500,
                 fontSize: '0.9375rem',
@@ -158,13 +160,26 @@ export const RoommatesPage: React.FC = () => {
                 background: 'transparent',
                 cursor: 'pointer',
                 color: isActive ? 'var(--ink)' : 'var(--text-muted)',
-                borderBottom: isActive ? '3px solid var(--primary)' : '3px solid transparent',
                 marginBottom: '-1px',
                 whiteSpace: 'nowrap',
                 transition: 'color var(--transition-fast)',
               }}
             >
               {tab.label}
+              {isActive && (
+                <motion.div
+                  layoutId="activeRoommateTab"
+                  style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: '3px',
+                    backgroundColor: 'var(--primary)',
+                  }}
+                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                />
+              )}
             </button>
           );
         })}

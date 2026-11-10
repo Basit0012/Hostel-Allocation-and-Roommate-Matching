@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
 import { applicationsApi } from '../api/applicationsApi';
 import { DashboardSummary, HostelApplicationItem } from '../types/application';
@@ -46,7 +47,12 @@ export const DashboardPage: React.FC = () => {
   const activeAllocation = student?.active_allocation;
 
   return (
-    <div className="container">
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="container py-6"
+    >
       {/* Header */}
       <div style={{ marginBottom: '2rem' }}>
         <h1
@@ -459,6 +465,6 @@ export const DashboardPage: React.FC = () => {
           </Link>
         </div>
       </section>
-    </div>
+    </motion.div>
   );
 };
