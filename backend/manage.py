@@ -6,7 +6,11 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.development')
+    _is_cloud = bool(os.getenv('RAILWAY_ENVIRONMENT') or os.getenv('RAILWAY_SERVICE_ID') or os.getenv('RENDER'))
+    os.environ.setdefault(
+        'DJANGO_SETTINGS_MODULE',
+        'config.settings.production' if _is_cloud else 'config.settings.development'
+    )
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

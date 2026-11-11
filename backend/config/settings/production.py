@@ -1,6 +1,6 @@
 """
 Production settings for Hostel Allocation & Roommate Matching System.
-Tailored for Render Web Service + Supabase PostgreSQL + Vercel React SPA.
+Tailored for Railway / Render Web Service + Supabase PostgreSQL + Vercel React SPA.
 """
 import os
 from .base import *  # noqa: F401, F403
@@ -12,28 +12,47 @@ SECRET_KEY = os.getenv('SECRET_KEY') or os.getenv('DJANGO_SECRET_KEY')
 if not SECRET_KEY:
     raise ValueError("SECRET_KEY environment variable must be set in production!")
 
-# Host Configuration
+# Host Configuration (Railway, Render, & Custom Hosts)
 RENDER_HOSTNAME = os.getenv('RENDER_EXTERNAL_HOSTNAME')
-if RENDER_HOSTNAME and RENDER_HOSTNAME not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append(RENDER_HOSTNAME)
+if RENDER_HOSTNAME:
+    if RENDER_HOSTNAME not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(RENDER_HOSTNAME)
+    render_origin = f'https://{RENDER_HOSTNAME}'
+    if render_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(render_origin)
 
-custom_hosts = os.getenv('DJANGO_ALLOWED_HOSTS', '')
-for host in custom_hosts.split(','):
-    host = host.strip()
-    if host and host not in ALLOWED_HOSTS:
-        ALLOWED_HOSTS.append(host)
+RAILWAY_DOMAIN = os.getenv('RAILWAY_PUBLIC_DOMAIN')
+if RAILWAY_DOMAIN:
+    if RAILWAY_DOMAIN not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(RAILWAY_DOMAIN)
+    railway_origin = f'https://{RAILWAY_DOMAIN}'
+    if railway_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(railway_origin)
+
+if os.getenv('RAILWAY_ENVIRONMENT') or os.getenv('RAILWAY_SERVICE_ID') or RAILWAY_DOMAIN:
+    for railway_host in ('.up.railway.app', 'healthcheck.railway.app'):
+        if railway_host not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(railway_host)
+
+for env_var in ('ALLOWED_HOSTS', 'DJANGO_ALLOWED_HOSTS'):
+    for host in os.getenv(env_var, '').split(','):
+        host = host.strip()
+        if host and host not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(host)
 
 # Frontend Integration (Vercel)
-FRONTEND_URL = os.getenv('FRONTEND_URL', '').strip()
+FRONTEND_URL = os.getenv('FRONTEND_URL', '').strip().rstrip('/')
 if FRONTEND_URL:
     if FRONTEND_URL not in CORS_ALLOWED_ORIGINS:
         CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
     if FRONTEND_URL not in CSRF_TRUSTED_ORIGINS:
         CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
 
-# Reverse Proxy SSL Header (Render terminates SSL at edge proxy)
+# Reverse Proxy SSL Header (Railway & Render terminate SSL at edge proxy)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'True').lower() in ('true', '1')
+# Exempt internal HTTP health checks (Railway probes /api/health/ directly over HTTP)
+SECURE_REDIRECT_EXEMPT = [r'^api/health/?$']
 
 # Cross-Domain Cookie Protections (Required for Decoupled Vercel <-> Render)
 SESSION_COOKIE_SAMESITE = 'None'

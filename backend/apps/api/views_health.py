@@ -30,3 +30,4 @@ def health_check_view(request):
         'database': 'connected',
         'service': 'Hostel Allocation & Roommate Matching API'
     }, status=200)
+

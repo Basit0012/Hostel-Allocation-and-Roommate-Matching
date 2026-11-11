@@ -17,7 +17,8 @@ load_dotenv(BASE_DIR.parent / '.env')
 # Security settings from environment
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', os.getenv('SECRET_KEY', 'django-insecure-dev-fallback-key-2026'))
 DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() in ('true', '1', 'yes')
-ALLOWED_HOSTS = [h.strip() for h in os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',') if h.strip()]
+_allowed_hosts_raw = os.getenv('ALLOWED_HOSTS') or os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost')
+ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts_raw.split(',') if h.strip()]
 
 # CORS Configuration (enables decoupled React frontend on Vercel)
 CORS_ALLOW_CREDENTIALS = True

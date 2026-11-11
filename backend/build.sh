@@ -13,3 +13,4 @@ echo "=== [3/3] Running database migrations ==="
 python manage.py migrate --noinput
 
 echo "=== Render build completed successfully ==="
+

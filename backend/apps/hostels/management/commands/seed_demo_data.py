@@ -4,6 +4,7 @@ Generates universities, degree programs, student registry, user accounts,
 hostel buildings, rooms, beds, roommate preferences, applications, and allocations.
 """
 import datetime
+from django.db import transaction
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -146,54 +147,70 @@ class Command(BaseCommand):
 
         def populate_hostel(hostel_obj, is_female=False):
             blocks = ['Block A', 'Block B'] if not is_female else ['Wing Alpha', 'Wing Beta']
-            total_beds_created = 0
+            expected_beds = sum(cap for _, cap, *_ in (room_blueprint_floor1 + room_blueprint_floor2)) * len(blocks)
+            if Bed.objects.filter(room__floor__block__hostel=hostel_obj).count() >= expected_beds:
+                return
 
-            for block_name in blocks:
-                block, _ = Block.objects.get_or_create(hostel=hostel_obj, name=block_name)
-                for floor_num, blueprint in [(1, room_blueprint_floor1), (2, room_blueprint_floor2)]:
-                    floor, _ = Floor.objects.get_or_create(block=block, floor_number=floor_num)
-                    for r_num, cap, cat, is_ac, washroom in blueprint:
-                        prefix = f"{'G-' if is_female else ''}"
-                        full_room_number = f"{prefix}{r_num}"
-                        room, _ = Room.objects.get_or_create(
-                            floor=floor,
-                            room_number=full_room_number,
-                            defaults={
-                                'capacity': cap,
-                                'category': cat,
-                                'washroom_type': washroom,
-                                'is_air_conditioned': is_ac,
-                                'status': RoomStatus.AVAILABLE,
-                            }
-                        )
-                        if room.category != cat:
-                            room.category = cat
-                            room.save()
+            with transaction.atomic():
+                total_beds_created = 0
+                prefix = 'G-' if is_female else ''
 
-                        # Attach facilities
-                        facs_to_add = [fac_wifi]
-                        if is_ac:
-                            facs_to_add.append(fac_ac)
-                        if washroom == WashroomType.ATTACHED:
-                            facs_to_add.append(fac_geyser)
-                        if cat == RoomCategory.STUDIO_APARTMENT:
-                            facs_to_add.append(fac_balcony)
+                for block_name in blocks:
+                    block, _ = Block.objects.get_or_create(hostel=hostel_obj, name=block_name)
+                    for floor_num, blueprint in [(1, room_blueprint_floor1), (2, room_blueprint_floor2)]:
+                        floor, _ = Floor.objects.get_or_create(block=block, floor_number=floor_num)
 
-                        for f in facs_to_add:
-                            RoomFacility.objects.get_or_create(room=room, facility=f)
-
-                        # Generate beds
-                        for b_idx in range(cap):
-                            b_ident = chr(ord('A') + b_idx)
-                            Bed.objects.get_or_create(
-                                room=room,
-                                bed_identifier=b_ident,
-                                defaults={'status': BedStatus.VACANT}
+                        rooms_to_insert = [
+                            Room(
+                                floor=floor,
+                                room_number=f"{prefix}{r_num}",
+                                capacity=cap,
+                                category=cat,
+                                washroom_type=washroom,
+                                is_air_conditioned=is_ac,
+                                status=RoomStatus.AVAILABLE,
                             )
-                            total_beds_created += 1
+                            for r_num, cap, cat, is_ac, washroom in blueprint
+                        ]
+                        Room.objects.bulk_create(rooms_to_insert, ignore_conflicts=True)
+                        rooms_by_num = {
+                            r.room_number: r for r in Room.objects.filter(floor=floor)
+                        }
 
-            hostel_obj.total_capacity = total_beds_created
-            hostel_obj.save()
+                        facilities_to_insert = []
+                        beds_to_insert = []
+                        for r_num, cap, cat, is_ac, washroom in blueprint:
+                            room = rooms_by_num[f"{prefix}{r_num}"]
+                            if room.category != cat:
+                                room.category = cat
+                                room.save(update_fields=['category'])
+
+                            facs_to_add = [fac_wifi]
+                            if is_ac:
+                                facs_to_add.append(fac_ac)
+                            if washroom == WashroomType.ATTACHED:
+                                facs_to_add.append(fac_geyser)
+                            if cat == RoomCategory.STUDIO_APARTMENT:
+                                facs_to_add.append(fac_balcony)
+
+                            for f in facs_to_add:
+                                facilities_to_insert.append(RoomFacility(room=room, facility=f))
+
+                            for b_idx in range(cap):
+                                beds_to_insert.append(
+                                    Bed(
+                                        room=room,
+                                        bed_identifier=chr(ord('A') + b_idx),
+                                        status=BedStatus.VACANT,
+                                    )
+                                )
+                                total_beds_created += 1
+
+                        RoomFacility.objects.bulk_create(facilities_to_insert, ignore_conflicts=True)
+                        Bed.objects.bulk_create(beds_to_insert, ignore_conflicts=True)
+
+                hostel_obj.total_capacity = total_beds_created
+                hostel_obj.save(update_fields=['total_capacity'])
 
         # Seed Boys Hostels
         for code, name, desc in boys_hostels_info:
