@@ -33,6 +33,12 @@ if os.getenv('RAILWAY_ENVIRONMENT') or os.getenv('RAILWAY_SERVICE_ID') or RAILWA
     for railway_host in ('.up.railway.app', 'healthcheck.railway.app'):
         if railway_host not in ALLOWED_HOSTS:
             ALLOWED_HOSTS.append(railway_host)
+    if 'https://*.up.railway.app' not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append('https://*.up.railway.app')
+
+# Ensure Vercel production and preview deployment URLs match CORS_ALLOWED_ORIGIN_REGEXES
+if 'https://*.vercel.app' not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append('https://*.vercel.app')
 
 for env_var in ('ALLOWED_HOSTS', 'DJANGO_ALLOWED_HOSTS'):
     for host in os.getenv(env_var, '').split(','):
