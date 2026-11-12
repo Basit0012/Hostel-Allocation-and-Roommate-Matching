@@ -30,14 +30,12 @@ export interface GatePassItem {
 }
 
 export type RMSTradeCategory =
-  | 'ELECTRICAL'
   | 'PLUMBING'
+  | 'ELECTRICAL'
+  | 'WIFI_LAN'
   | 'CARPENTRY'
-  | 'CIVIL'
-  | 'HVAC'
-  | 'PEST_CONTROL'
-  | 'CLEANING'
-  | 'OTHER';
+  | 'APPLIANCE'
+  | 'PEST_CONTROL';
 
 export type RMSTicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'EMERGENCY';
 

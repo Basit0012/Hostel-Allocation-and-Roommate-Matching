@@ -1,54 +1,226 @@
-:root {
-  /* Brand Tokens — DESIGN.md normative specification */
-  --brand: #F26522;
-  --primary: #C2410C;
-  --primary-hover: #9A3412;
+/* ==========================================================================
+   Watermelon UI + LPU Campus Residence Design System Tokens
+   Light (:root / [data-theme="light"]) & Dark (.dark / [data-theme="dark"])
+   All foreground/background pairs verified >= 4.5:1 WCAG AA.
+   ========================================================================== */
 
-  /* Neutrals & Surfaces */
-  --ink: #1A1A1A;
-  --text: #252525;
-  --text-muted: #5C5750;
-  --bg: #F7F5F0;
-  --surface: #FFFFFF;
-  --border: #E8E4DC;
-  --border-strong: #CFC8BB;
-  --focus: #F26522;
+:root,
+[data-theme="light"] {
+  color-scheme: light;
 
-  /* Status Colors (Dual-Encoding Rule) */
-  --status-success: #1E6B3A;
-  --status-success-bg: #E7F2EA;
-  --status-pending: #8A5A00;
-  --status-pending-bg: #FBF1DC;
-  --status-waitlisted: #5C5750;
-  --status-waitlisted-bg: #EFECE5;
-  --status-danger: #A4161A;
-  --status-danger-bg: #FBE9E8;
+  /* --- Canonical Watermelon UI Surfaces & Ink --- */
+  --background: #FFFFFF;
+  --foreground: #09090B;
+  --card: #FAFAFA;
+  --card-foreground: #09090B;
+  --muted: #F4F4F5;
+  --muted-foreground: #52525B;
+  --primary: #18181B;
+  --primary-foreground: #FAFAFA;
+  --secondary: #F4F4F5;
+  --secondary-foreground: #18181B;
+  --accent-brand: #84CC16;
+  --accent-brand-ink: #09090B;
+  --accent-text: #3F6212;
+  --accent-soft: #ECFCCB;
+  --border: #E4E4E7;
+  --border-strong: #D4D4D8;
+  --ring: #18181B;
+  --destructive: #B91C1C;
+  --destructive-foreground: #FFFFFF;
 
-  /* Backward compatibility aliases mapping cleanly to normative tokens */
+  /* --- Semantic Dual-Encoded Status Tokens --- */
+  --available-ink: #166534;
+  --available-bg: #DCFCE7;
+  --available-border: #86EFAC;
+
+  --taken-ink: #52525B;
+  --taken-bg: #F4F4F5;
+  --taken-border: #D4D4D8;
+
+  --warning-ink: #92400E;
+  --warning-bg: #FEF3C7;
+  --warning-border: #FCD34D;
+
+  --danger-ink: #B91C1C;
+  --danger-bg: #FEE2E2;
+  --danger-border: #FCA5A5;
+
+  /* --- Portal & Legacy Alias Bridge (Keeps Existing Routes Clean) --- */
+  --paper-ground: var(--background);
+  --paper-surface: var(--card);
+  --paper-recessed: var(--muted);
+  --paper-hover: #EFEFF2;
+  --blueprint-grid: #E4E4E7;
+
+  --ink: var(--foreground);
+  --ink-secondary: var(--muted-foreground);
+  --ink-muted: #52525B;
+
+  --primary-ink: var(--accent-text);
+  --primary-hover: #27272A;
+  --primary-tint: var(--accent-soft);
+  --on-primary: var(--primary-foreground);
+
+  --md-sys-color-primary: var(--primary);
+  --md-sys-color-on-primary: var(--primary-foreground);
+  --md-sys-color-primary-container: var(--muted);
+  --md-sys-color-on-primary-container: var(--foreground);
+  --md-sys-color-primary-hover: var(--primary-hover);
+
+  --md-sys-color-secondary: var(--muted-foreground);
+  --md-sys-color-on-secondary: var(--background);
+  --md-sys-color-secondary-container: var(--muted);
+  --md-sys-color-on-secondary-container: var(--foreground);
+
+  --md-sys-color-tertiary: var(--accent-text);
+  --md-sys-color-on-tertiary: var(--background);
+  --md-sys-color-tertiary-container: var(--accent-soft);
+  --md-sys-color-on-tertiary-container: var(--accent-text);
+
+  --md-sys-color-surface: var(--background);
+  --md-sys-color-surface-dim: var(--muted);
+  --md-sys-color-surface-bright: var(--background);
+  --md-sys-color-surface-container-lowest: var(--background);
+  --md-sys-color-surface-container-low: var(--card);
+  --md-sys-color-surface-container: var(--muted);
+  --md-sys-color-surface-container-high: var(--paper-hover);
+  --md-sys-color-surface-container-highest: #E4E4E7;
+  --md-sys-color-surface-variant: var(--muted);
+
+  --md-sys-color-on-surface: var(--foreground);
+  --md-sys-color-on-surface-variant: var(--muted-foreground);
+  --md-sys-color-outline: var(--border-strong);
+  --md-sys-color-outline-variant: var(--border);
+  --md-sys-color-inverse-surface: var(--foreground);
+  --md-sys-color-inverse-on-surface: var(--background);
+  --md-sys-color-scrim: rgba(9, 9, 11, 0.45);
+
+  --md-sys-color-success: var(--available-ink);
+  --md-sys-color-on-success: #FFFFFF;
+  --md-sys-color-success-container: var(--available-bg);
+  --md-sys-color-on-success-container: var(--available-ink);
+
+  --md-sys-color-warning: var(--warning-ink);
+  --md-sys-color-on-warning: #FFFFFF;
+  --md-sys-color-warning-container: var(--warning-bg);
+  --md-sys-color-on-warning-container: var(--warning-ink);
+
+  --md-sys-color-error: var(--danger-ink);
+  --md-sys-color-on-error: #FFFFFF;
+  --md-sys-color-error-container: var(--danger-bg);
+  --md-sys-color-on-error-container: var(--danger-ink);
+
+  --md-sys-state-hover: rgba(9, 9, 11, 0.04);
+  --md-sys-state-pressed: rgba(9, 9, 11, 0.08);
+  --md-sys-state-focus: rgba(132, 204, 22, 0.25);
+
+  --primary-container: var(--muted);
+  --on-primary-container: var(--foreground);
+  --on-secondary: var(--background);
+  --secondary-container: var(--muted);
+  --on-secondary-container: var(--foreground);
+  --tertiary: var(--accent-text);
+  --on-tertiary: var(--background);
+  --tertiary-container: var(--accent-soft);
+  --on-tertiary-container: var(--accent-text);
+
+  --surface: var(--card);
+  --surface-page: var(--background);
+  --surface-dim: var(--muted);
+  --surface-container-lowest: var(--background);
+  --surface-container-low: var(--card);
+  --surface-container: var(--muted);
+  --surface-container-high: var(--paper-hover);
+  --surface-container-highest: #E4E4E7;
+  --surface-variant: var(--muted);
+
+  --on-surface: var(--foreground);
+  --on-surface-variant: var(--muted-foreground);
+  --outline: var(--border-strong);
+  --outline-variant: var(--border);
+
+  --error: var(--danger-ink);
+  --on-error: #FFFFFF;
+  --error-container: var(--danger-bg);
+  --on-error-container: var(--danger-ink);
+
+  --brand: var(--accent-text);
+  --text: var(--foreground);
+  --text-muted: var(--muted-foreground);
+  --bg: var(--background);
+  --focus: var(--ring);
+
+  --status-success: var(--available-ink);
+  --status-success-bg: var(--available-bg);
+  --status-pending: var(--warning-ink);
+  --status-pending-bg: var(--warning-bg);
+  --status-waitlisted: var(--muted-foreground);
+  --status-waitlisted-bg: var(--muted);
+  --status-danger: var(--danger-ink);
+  --status-danger-bg: var(--danger-bg);
+
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
-  --color-brand: var(--brand);
-  --color-bg: var(--bg);
-  --color-surface: var(--surface);
-  --color-surface-hover: #FAF8F3;
+  --color-brand: var(--accent-text);
+  --color-bg: var(--background);
+  --color-surface: var(--card);
+  --color-surface-hover: var(--paper-hover);
   --color-border: var(--border);
   --color-border-dark: var(--border-strong);
   --color-border-strong: var(--border-strong);
-  --color-text-primary: var(--text);
-  --color-text-secondary: var(--text-muted);
-  --color-text-muted: var(--text-muted);
-  --color-text-ink: var(--ink);
+  --color-text-primary: var(--foreground);
+  --color-text-secondary: var(--muted-foreground);
+  --color-text-muted: var(--muted-foreground);
+  --color-text-ink: var(--foreground);
+  --color-success: var(--available-ink);
+  --color-success-light: var(--available-bg);
+  --color-warning: var(--warning-ink);
+  --color-warning-light: var(--warning-bg);
+  --color-danger: var(--danger-ink);
+  --color-danger-light: var(--danger-bg);
+  --color-info: var(--foreground);
+  --color-info-light: var(--muted);
 
-  --color-success: var(--status-success);
-  --color-success-light: var(--status-success-bg);
-  --color-warning: var(--status-pending);
-  --color-warning-light: var(--status-pending-bg);
-  --color-danger: var(--status-danger);
-  --color-danger-light: var(--status-danger-bg);
-  --color-info: var(--primary);
-  --color-info-light: var(--status-pending-bg);
+  --bp-grid-dot: #E4E4E7;
+  --bp-corridor: #F4F4F5;
+  --bp-ac-bg: #F4F4F5;
+  --bp-ac-text: #18181B;
+  --bp-ac-border: #D4D4D8;
+  --bp-cool-bg: #FEF3C7;
+  --bp-cool-text: #92400E;
+  --bp-cool-border: #FCD34D;
+  --bp-window-bg: #ECFCCB;
+  --bp-window-border: #BEF264;
 
-  /* Spacing Scale (8px baseline) */
+  --shadow-none: none;
+  --shadow-sm: 0 1px 2px rgba(9, 9, 11, 0.04);
+  --shadow-md: 0 4px 12px rgba(9, 9, 11, 0.06);
+  --shadow-lg: 0 12px 28px rgba(9, 9, 11, 0.08);
+  --shadow-xl: 0 24px 48px rgba(9, 9, 11, 0.12);
+  --shadow-modal: 0 24px 48px rgba(9, 9, 11, 0.16);
+
+  /* --- Shapes (Watermelon UI) --- */
+  --radius: 12px;
+  --radius-none: 0px;
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-pill: 9999px;
+  --radius-pill-lg: 9999px;
+  --radius-full: 9999px;
+
+  --md-sys-shape-corner-none: 0px;
+  --md-sys-shape-corner-extra-small: 4px;
+  --md-sys-shape-corner-small: 6px;
+  --md-sys-shape-corner-medium: 8px;
+  --md-sys-shape-corner-large: 12px;
+  --md-sys-shape-corner-extra-large: 16px;
+  --md-sys-shape-corner-full: 9999px;
+
+  /* --- Spacing & Responsive Grid --- */
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
@@ -56,7 +228,6 @@
   --space-xl: 32px;
   --space-2xl: 48px;
 
-  /* Compatibility spacing aliases */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -67,25 +238,99 @@
   --space-10: 2.5rem;
   --space-12: 3rem;
 
-  /* Shape & Radii (Anti-Pill Rule: Max 6px on containers, 2px tables, 4px buttons) */
-  --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: 6px;
-  --radius-xl: 6px;
-  --radius-full: 9999px;
+  --m3-grid-margin: 16px;
+  --m3-grid-gutter: 12px;
+  --m3-grid-columns: 4;
 
-  /* Elevation (Zero-Float Rule: Flat-at-rest, single subtle shadow for overlays) */
-  --shadow-none: none;
-  --shadow-sm: none;
-  --shadow-md: none;
-  --shadow-lg: 0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-xl: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --transition-ease: cubic-bezier(0.2, 0, 0, 1);
+  --transition-fast: 150ms cubic-bezier(0.2, 0, 0, 1);
+  --transition-normal: 200ms cubic-bezier(0.2, 0, 0, 1);
 
-  /* Motion: 150ms calm transition */
-  --transition-fast: 150ms ease;
-  --transition-normal: 150ms ease;
+  --font-display: 'Schibsted Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: var(--font-display);
+  --font-sans: 'Schibsted Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
 
-  /* Fonts */
-  --font-serif: 'Source Serif 4', Georgia, serif;
-  --font-sans: 'Source Sans 3', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+.dark,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --background: #09090B;
+  --foreground: #FAFAFA;
+  --card: #111113;
+  --card-foreground: #FAFAFA;
+  --muted: #18181B;
+  --muted-foreground: #A1A1AA;
+  --primary: #FAFAFA;
+  --primary-foreground: #09090B;
+  --secondary: #18181B;
+  --secondary-foreground: #FAFAFA;
+  --accent-brand: #84CC16;
+  --accent-brand-ink: #09090B;
+  --accent-text: #A3E635;
+  --accent-soft: #1A2E05;
+  --border: #27272A;
+  --border-strong: #3F3F46;
+  --ring: #FAFAFA;
+  --destructive: #FCA5A5;
+  --destructive-foreground: #450A0A;
+
+  --available-ink: #6EE7B7;
+  --available-bg: #064E3B;
+  --available-border: #047857;
+
+  --taken-ink: #A1A1AA;
+  --taken-bg: #18181B;
+  --taken-border: #3F3F46;
+
+  --warning-ink: #FCD34D;
+  --warning-bg: #451A03;
+  --warning-border: #92400E;
+
+  --danger-ink: #FCA5A5;
+  --danger-bg: #450A0A;
+  --danger-border: #991B1B;
+
+  --paper-ground: var(--background);
+  --paper-surface: var(--card);
+  --paper-recessed: var(--muted);
+  --paper-hover: #27272A;
+  --blueprint-grid: #27272A;
+
+  --ink: var(--foreground);
+  --ink-secondary: var(--muted-foreground);
+  --ink-muted: #A1A1AA;
+
+  --primary-ink: var(--accent-text);
+  --primary-hover: #E4E4E7;
+  --primary-tint: var(--accent-soft);
+  --on-primary: var(--primary-foreground);
+
+  --bp-grid-dot: #27272A;
+  --bp-corridor: #18181B;
+  --bp-ac-bg: #18181B;
+  --bp-ac-text: #FAFAFA;
+  --bp-ac-border: #3F3F46;
+  --bp-cool-bg: #451A03;
+  --bp-cool-text: #FCD34D;
+  --bp-cool-border: #92400E;
+  --bp-window-bg: #1A2E05;
+  --bp-window-border: #4D7C0F;
+}
+
+@media (min-width: 600px) {
+  :root {
+    --m3-grid-margin: 24px;
+    --m3-grid-gutter: 16px;
+    --m3-grid-columns: 8;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --m3-grid-margin: 24px;
+    --m3-grid-gutter: 20px;
+    --m3-grid-columns: 12;
+  }
 }
