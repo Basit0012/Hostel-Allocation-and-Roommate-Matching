@@ -3,7 +3,11 @@
  * Automatically manages CSRF tokens and session cookies.
  */
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
+const rawApiBase = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
+const isVercelDeployment =
+  typeof window !== 'undefined' && window.location.hostname.endsWith('.vercel.app');
+// Route API requests through Vercel's same-origin /api/* rewrite so CSRF and session cookies stay first-party.
+const API_BASE = isVercelDeployment ? '' : rawApiBase;
 
 function getCookie(name: string): string | null {
   if (typeof document === 'undefined') return null;
