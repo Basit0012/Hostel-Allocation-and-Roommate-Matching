@@ -1,9 +1,26 @@
 """
 Tests for REST API endpoints.
 """
+import datetime
+from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
 from django.urls import reverse
+from django.utils import timezone
+from apps.academics.models import (
+    University,
+    Department,
+    DegreeProgram,
+    Branch,
+    AdmissionBatch,
+    StudentRegistry,
+    Gender,
+)
+from apps.applications.models import AccommodationCycle
 from apps.hostels.models import Hostel, GenderPolicy, HostelStatus
+from apps.roommates.models import RoommatePreference, FoodPreference, RoommateRequest, RequestStatus
+from apps.students.models import StudentProfile
+
+User = get_user_model()
 
 
 class ApiEndpointsTestCase(TestCase):
@@ -88,4 +105,60 @@ class ApiEndpointsTestCase(TestCase):
         self.assertIn(resp.status_code, (200, 302))
         if resp.status_code == 200:
             self.assertIn('root', resp.content.decode())
+
+    def test_api_roommates_discover_returns_recommendations(self):
+        univ = University.objects.create(name='LPU Test', code='LPU-API')
+        dept = Department.objects.create(university=univ, name='CSE', code='CSE')
+        prog = DegreeProgram.objects.create(department=dept, name='B.Tech', duration_years=4)
+        branch = Branch.objects.create(program=prog, name='Computer Science', code='CS')
+        batch = AdmissionBatch.objects.create(program=prog, year=2024)
+
+        reg_a = StudentRegistry.objects.create(
+            student_id='API001', full_name='Student A', institutional_email='api_a@lpu.in',
+            gender=Gender.MALE, date_of_birth=datetime.date(2004, 1, 1), branch=branch, batch=batch
+        )
+        reg_b = StudentRegistry.objects.create(
+            student_id='API002', full_name='Student B', institutional_email='api_b@lpu.in',
+            gender=Gender.MALE, date_of_birth=datetime.date(2004, 2, 2), branch=branch, batch=batch
+        )
+        user_a = User.objects.create_user(email='api_a@lpu.in', password='Password123!', student_id_login='API001')
+        user_b = User.objects.create_user(email='api_b@lpu.in', password='Password123!', student_id_login='API002')
+        student_a = StudentProfile.objects.create(user=user_a, registry=reg_a)
+        student_b = StudentProfile.objects.create(user=user_b, registry=reg_b)
+
+        cycle = AccommodationCycle.objects.create(
+            academic_year='2026-2027',
+            semester=1,
+            name='Fall 2026',
+            application_start=timezone.now() - datetime.timedelta(days=1),
+            application_end=timezone.now() + datetime.timedelta(days=10),
+            is_active=True,
+        )
+        RoommatePreference.objects.create(
+            student=student_a, sleeping_schedule=3, cleanliness=4, study_habits=3,
+            noise_tolerance=3, food_preference=FoodPreference.VEGETARIAN,
+            social_preference=3, temperature_pref=3
+        )
+        RoommatePreference.objects.create(
+            student=student_b, sleeping_schedule=3, cleanliness=4, study_habits=3,
+            noise_tolerance=3, food_preference=FoodPreference.VEGETARIAN,
+            social_preference=3, temperature_pref=3
+        )
+        RoommateRequest.objects.create(
+            sender=student_a,
+            receiver=student_b,
+            cycle=cycle,
+            status=RequestStatus.PENDING,
+        )
+
+        self.client.force_login(user_a)
+        resp = self.client.get(reverse('api:roommates_discover'))
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data['has_preferences'])
+        self.assertEqual(len(data['recommendations']), 1)
+        rec = data['recommendations'][0]
+        self.assertEqual(rec['student_id'], 'API002')
+        self.assertEqual(rec['score'], 100.0)
+        self.assertTrue(rec['has_pending_request'])
 

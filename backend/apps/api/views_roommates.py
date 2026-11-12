@@ -166,11 +166,11 @@ def discover_candidates_view(request):
                 sender=student,
                 cycle=cycle,
                 status=RequestStatus.PENDING,
-                receiver__in=[r['candidate'] for r in recs]
+                receiver__in=[r['student'] for r in recs]
             ).values_list('receiver_id', flat=True)
         )
         for r in recs:
-            cand = r['candidate']
+            cand = r['student']
             has_pending = cand.pk in pending_cand_ids
 
             recommendations.append({
@@ -178,7 +178,7 @@ def discover_candidates_view(request):
                 'full_name': cand.registry.full_name,
                 'branch': cand.registry.branch.name if cand.registry.branch else '',
                 'cgpa': float(getattr(cand.registry, 'cgpa', 0)) if getattr(cand.registry, 'cgpa', None) is not None else None,
-                'score': r['score'],
+                'score': float(r['score']) if r.get('score') is not None else None,
                 'is_room_aligned': r['is_room_aligned'],
                 'target_room': str(r['target_room']) if r['target_room'] else None,
                 'has_pending_request': has_pending,
