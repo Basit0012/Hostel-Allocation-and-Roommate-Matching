@@ -290,6 +290,12 @@
   padding: 1.5rem 0 5.5rem;
 }
 
+@media (max-width: 839px) {
+  html {
+    scroll-padding-bottom: 5.5rem;
+  }
+}
+
 @media (min-width: 840px) {
   .m3-desktop-rail {
     display: flex;

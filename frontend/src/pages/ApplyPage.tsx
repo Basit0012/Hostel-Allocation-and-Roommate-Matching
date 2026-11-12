@@ -465,7 +465,7 @@ export const ApplyPage: React.FC = () => {
                         <option value="">Any Available Room</option>
                         {getFilteredRooms(slot.hostelValue).map((r) => (
                           <option key={r.id} value={r.id}>
-                            Room {r.room_number} ({r.capacity}-Seater, {r.is_air_conditioned ? 'AC' : 'Cooler'})
+                            Room {r.room_number} · {r.block_name} ({r.capacity}-Seater, {r.is_air_conditioned ? 'AC' : 'Cooler'})
                           </option>
                         ))}
                       </select>

@@ -40,7 +40,9 @@ export const DashboardPage: React.FC = () => {
     setIsLoading(true);
     Promise.all([
       applicationsApi.getDashboardSummary(),
-      applicationsApi.getApplications().catch(() => ({ applications: [] })),
+      user?.role === 'STUDENT'
+        ? applicationsApi.getApplications().catch(() => ({ applications: [] }))
+        : Promise.resolve({ applications: [] }),
     ])
       .then(([sumData, appData]) => {
         setSummary(sumData);
@@ -48,7 +50,7 @@ export const DashboardPage: React.FC = () => {
       })
       .catch(() => {})
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [user?.role]);
 
   if (isLoading) return <Spinner label="Loading residential dashboard..." />;
 

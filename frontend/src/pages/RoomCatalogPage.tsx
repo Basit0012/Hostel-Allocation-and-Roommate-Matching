@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { BedDouble, Check, RotateCcw, Search, SlidersHorizontal, Snowflake } from 'lucide-react';
 import { hostelsApi } from '../api/hostelsApi';
@@ -38,16 +38,38 @@ export const RoomCatalogPage: React.FC = () => {
       .catch(() => {});
   }, []);
 
+  const prevSearchRef = useRef(filters.search);
+
   useEffect(() => {
+    const controller = new AbortController();
+    const searchChanged = prevSearchRef.current !== filters.search;
+    prevSearchRef.current = filters.search;
+    const delayMs = searchChanged ? 200 : 0;
+
     setIsLoading(true);
-    hostelsApi
-      .getRooms(filters)
-      .then((res) => {
-        setRooms(res.rooms);
-        setError('');
-      })
-      .catch((err) => setError(err.message || 'Failed to load campus room catalog.'))
-      .finally(() => setIsLoading(false));
+    const timer = window.setTimeout(() => {
+      hostelsApi
+        .getRooms(filters, controller.signal)
+        .then((res) => {
+          if (controller.signal.aborted) return;
+          setRooms(res.rooms);
+          setError('');
+        })
+        .catch((err) => {
+          if (controller.signal.aborted || (err instanceof Error && err.name === 'AbortError')) return;
+          setError(err instanceof Error ? err.message : 'Failed to load campus room catalog.');
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) {
+            setIsLoading(false);
+          }
+        });
+    }, delayMs);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
   }, [filters]);
 
   const handleFilterChange = <K extends keyof RoomFilterState>(key: K, value: RoomFilterState[K]) => {
@@ -228,10 +250,12 @@ export const RoomCatalogPage: React.FC = () => {
           }}
         >
           <div>
-            <label className="m3-label-small" style={{ display: 'block', color: 'var(--on-surface-variant)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+            <label htmlFor="filter-hostel" className="m3-label-small" style={{ display: 'block', color: 'var(--on-surface-variant)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
               Hostel Complex
             </label>
             <select
+              id="filter-hostel"
+              name="hostel_id"
               className="m3-field-control"
               value={filters.hostel_id}
               onChange={(e) => handleFilterChange('hostel_id', e.target.value)}
@@ -246,10 +270,12 @@ export const RoomCatalogPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="m3-label-small" style={{ display: 'block', color: 'var(--on-surface-variant)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+            <label htmlFor="filter-gender" className="m3-label-small" style={{ display: 'block', color: 'var(--on-surface-variant)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
               Gender Policy
             </label>
             <select
+              id="filter-gender"
+              name="gender"
               className="m3-field-control"
               value={filters.gender}
               onChange={(e) => handleFilterChange('gender', e.target.value)}
@@ -261,10 +287,12 @@ export const RoomCatalogPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="m3-label-small" style={{ display: 'block', color: 'var(--on-surface-variant)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+            <label htmlFor="filter-seater" className="m3-label-small" style={{ display: 'block', color: 'var(--on-surface-variant)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
               Seater Capacity
             </label>
             <select
+              id="filter-seater"
+              name="seater"
               className="m3-field-control"
               value={filters.seater}
               onChange={(e) => handleFilterChange('seater', e.target.value)}
@@ -279,10 +307,12 @@ export const RoomCatalogPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="m3-label-small" style={{ display: 'block', color: 'var(--on-surface-variant)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+            <label htmlFor="filter-cooling" className="m3-label-small" style={{ display: 'block', color: 'var(--on-surface-variant)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
               Cooling System
             </label>
             <select
+              id="filter-cooling"
+              name="cooling"
               className="m3-field-control"
               value={filters.cooling}
               onChange={(e) => handleFilterChange('cooling', e.target.value)}
@@ -294,10 +324,12 @@ export const RoomCatalogPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="m3-label-small" style={{ display: 'block', color: 'var(--on-surface-variant)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+            <label htmlFor="filter-category" className="m3-label-small" style={{ display: 'block', color: 'var(--on-surface-variant)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
               Category
             </label>
             <select
+              id="filter-category"
+              name="category"
               className="m3-field-control"
               value={filters.category}
               onChange={(e) => handleFilterChange('category', e.target.value)}
@@ -310,10 +342,12 @@ export const RoomCatalogPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="m3-label-small" style={{ display: 'block', color: 'var(--on-surface-variant)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+            <label htmlFor="filter-washroom" className="m3-label-small" style={{ display: 'block', color: 'var(--on-surface-variant)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
               Washroom
             </label>
             <select
+              id="filter-washroom"
+              name="washroom_type"
               className="m3-field-control"
               value={filters.washroom_type}
               onChange={(e) => handleFilterChange('washroom_type', e.target.value)}
@@ -332,7 +366,10 @@ export const RoomCatalogPage: React.FC = () => {
             style={{ position: 'absolute', left: '0.95rem', pointerEvents: 'none' }}
           />
           <input
+            id="filter-room-search"
+            name="search"
             type="text"
+            aria-label="Search by room number or hostel code"
             className="m3-search-input"
             placeholder="Search by room number (e.g., 101, 204) or hostel code..."
             value={filters.search}

@@ -135,6 +135,7 @@ export const RoomInspectionModal: React.FC<RoomInspectionModalProps> = ({
           <button
             type="button"
             onClick={onClose}
+            aria-label="Close room unit inspector"
             style={{
               background: 'none',
               border: 'none',

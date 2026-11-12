@@ -162,3 +162,61 @@ class ApiEndpointsTestCase(TestCase):
         self.assertEqual(rec['score'], 100.0)
         self.assertTrue(rec['has_pending_request'])
 
+        search_resp = self.client.get(reverse('api:roommates_discover'), {'q': 'API002'})
+        self.assertEqual(search_resp.status_code, 200)
+        search_data = search_resp.json()
+        self.assertIsNotNone(search_data['search_result'])
+        self.assertEqual(search_data['search_result']['student_id'], 'API002')
+        self.assertEqual(search_data['search_result']['score'], 100.0)
+        self.assertTrue(search_data['search_result']['has_pending_request'])
+
+    def test_api_auth_register_validates_phone_and_logs_in(self):
+        univ = University.objects.create(name='LPU Reg Test', code='LPU-REG')
+        dept = Department.objects.create(university=univ, name='CSE', code='CSE')
+        prog = DegreeProgram.objects.create(department=dept, name='B.Tech', duration_years=4)
+        branch = Branch.objects.create(program=prog, name='Computer Science', code='CS')
+        batch = AdmissionBatch.objects.create(program=prog, year=2024)
+
+        StudentRegistry.objects.create(
+            student_id='REG001',
+            full_name='Reg Student',
+            institutional_email='reg001@lpu.in',
+            gender=Gender.MALE,
+            date_of_birth=datetime.date(2004, 1, 1),
+            branch=branch,
+            batch=batch,
+        )
+
+        bad_resp = self.client.post(
+            reverse('api:auth_register'),
+            data={
+                'student_id': 'REG001',
+                'institutional_email': 'reg001@lpu.in',
+                'password': 'Password123!',
+                'confirm_password': 'Password123!',
+                'emergency_contact_phone': 'invalid-phone',
+            },
+            content_type='application/json',
+        )
+        self.assertEqual(bad_resp.status_code, 400)
+        self.assertIn('emergency_contact_phone', bad_resp.json().get('errors', {}))
+
+        ok_resp = self.client.post(
+            reverse('api:auth_register'),
+            data={
+                'student_id': 'REG001',
+                'institutional_email': 'reg001@lpu.in',
+                'password': 'Password123!',
+                'confirm_password': 'Password123!',
+                'emergency_contact_name': 'Parent Name',
+                'emergency_contact_phone': '+91 9876543210',
+            },
+            content_type='application/json',
+        )
+        self.assertEqual(ok_resp.status_code, 201)
+        self.assertTrue(ok_resp.json()['success'])
+
+        me_resp = self.client.get(reverse('api:auth_me'))
+        self.assertEqual(me_resp.status_code, 200)
+        self.assertTrue(me_resp.json()['authenticated'])
+

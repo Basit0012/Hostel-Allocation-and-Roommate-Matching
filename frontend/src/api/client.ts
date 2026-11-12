@@ -94,9 +94,20 @@ export async function apiClient<T>(endpoint: string, options: RequestOptions = {
       }
     }
 
-    const errorMsg = data && typeof data === 'object' && 'error' in data 
-      ? (data as { error: string }).error 
-      : `Request failed with status ${response.status}`;
+    let errorMsg = `Request failed with status ${response.status}`;
+    if (data && typeof data === 'object') {
+      const payload = data as { error?: string; errors?: Record<string, string[] | string> };
+      const fieldDetails = payload.errors
+        ? Object.entries(payload.errors)
+            .flatMap(([, msgs]) => (Array.isArray(msgs) ? msgs : [msgs]))
+            .filter(Boolean)
+        : [];
+      if (fieldDetails.length > 0) {
+        errorMsg = fieldDetails.join(' ');
+      } else if (payload.error) {
+        errorMsg = payload.error;
+      }
+    }
     throw new Error(errorMsg);
   }
 

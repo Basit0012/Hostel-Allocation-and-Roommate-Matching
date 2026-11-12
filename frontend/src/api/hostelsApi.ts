@@ -11,8 +11,9 @@ export const hostelsApi = {
   getHostelDetail: (id: number) =>
     apiClient<{ hostel: HostelDetail }>(`/api/hostels/${id}/`),
 
-  getRooms: (filters?: RoomFilterState) =>
+  getRooms: (filters?: RoomFilterState, signal?: AbortSignal) =>
     apiClient<{ rooms: RoomSummary[]; count: number }>('/api/rooms/', {
+      signal,
       params: filters ? {
         hostel_id: filters.hostel_id,
         gender: filters.gender,

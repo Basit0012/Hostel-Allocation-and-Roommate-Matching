@@ -31,6 +31,7 @@ interface NavDestination {
   group: 'Workspace' | 'Residence';
   icon: React.ReactNode;
   authOnly?: boolean;
+  studentOnly?: boolean;
 }
 
 const DESTINATIONS: NavDestination[] = [
@@ -38,8 +39,8 @@ const DESTINATIONS: NavDestination[] = [
   { to: '/dashboard', label: 'Dashboard', shortLabel: 'Dashboard', group: 'Workspace', icon: <LayoutDashboard size={16} />, authOnly: true },
   { to: '/hostels', label: 'Hostel Explorer', shortLabel: 'Hostels', group: 'Residence', icon: <Building2 size={16} /> },
   { to: '/rooms', label: 'Rooms & Tariffs', shortLabel: 'Rooms', group: 'Residence', icon: <BedDouble size={16} /> },
-  { to: '/roommates', label: 'Roommate Match', shortLabel: 'Mates', group: 'Residence', icon: <Users size={16} />, authOnly: true },
-  { to: '/apply', label: 'Priority Application', shortLabel: 'Apply', group: 'Residence', icon: <FileCheck2 size={16} />, authOnly: true },
+  { to: '/roommates', label: 'Roommate Match', shortLabel: 'Mates', group: 'Residence', icon: <Users size={16} />, authOnly: true, studentOnly: true },
+  { to: '/apply', label: 'Priority Application', shortLabel: 'Apply', group: 'Residence', icon: <FileCheck2 size={16} />, authOnly: true, studentOnly: true },
 ];
 
 const ROUTE_TITLES: Record<string, string> = {
@@ -82,9 +83,14 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [calcOpen, setCalcOpen] = useState(false);
 
+  const isStudent = user?.role === 'STUDENT';
+
   const visibleDestinations = useMemo(
-    () => DESTINATIONS.filter((d) => !d.authOnly || isAuthenticated),
-    [isAuthenticated],
+    () =>
+      DESTINATIONS.filter(
+        (d) => (!d.authOnly || isAuthenticated) && (!d.studentOnly || isStudent),
+      ),
+    [isAuthenticated, isStudent],
   );
 
   const workspaceItems = useMemo(
@@ -99,7 +105,9 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
   const mobileBarItems = useMemo(() => {
     const core = isAuthenticated
-      ? ['/', '/hostels', '/apply', '/dashboard']
+      ? isStudent
+        ? ['/', '/hostels', '/apply', '/dashboard']
+        : ['/', '/hostels', '/rooms', '/dashboard']
       : ['/', '/hostels', '/rooms', '/login'];
     return core
       .map((path) => {
@@ -152,27 +160,33 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
             {
               id: 'nav-dashboard',
               title: 'Dashboard',
-              subtitle: 'Application state, gate pass, and RMS requests',
+              subtitle: isStudent
+                ? 'Application state, gate pass, and RMS requests'
+                : 'Campus census, gate pass approvals, and RMS dispatch',
               section: 'Navigation',
               icon: <LayoutDashboard size={15} />,
               action: () => navigate('/dashboard'),
             },
-            {
-              id: 'nav-roommates',
-              title: 'Roommate Match',
-              subtitle: '7-factor preferences and mutual buddy group',
-              section: 'Navigation',
-              icon: <Users size={15} />,
-              action: () => navigate('/roommates'),
-            },
-            {
-              id: 'nav-apply',
-              title: 'Priority Application (Max 3)',
-              subtitle: 'Submit up to 3 ordered block and room preferences',
-              section: 'Navigation',
-              icon: <FileCheck2 size={15} />,
-              action: () => navigate('/apply'),
-            },
+            ...(isStudent
+              ? [
+                  {
+                    id: 'nav-roommates',
+                    title: 'Roommate Match',
+                    subtitle: '7-factor preferences and mutual buddy group',
+                    section: 'Navigation',
+                    icon: <Users size={15} />,
+                    action: () => navigate('/roommates'),
+                  },
+                  {
+                    id: 'nav-apply',
+                    title: 'Priority Application (Max 3)',
+                    subtitle: 'Submit up to 3 ordered block and room preferences',
+                    section: 'Navigation',
+                    icon: <FileCheck2 size={15} />,
+                    action: () => navigate('/apply'),
+                  },
+                ]
+              : []),
           ]
         : [
             {
@@ -206,7 +220,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
     ];
 
     return [...navCommands, ...toolCommands];
-  }, [isAuthenticated, navigate, resolvedTheme, toggleTheme]);
+  }, [isAuthenticated, isStudent, navigate, resolvedTheme, toggleTheme]);
 
   const handleLogout = async () => {
     setDrawerOpen(false);
@@ -520,33 +534,35 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
         </div>
       )}
 
-      {/* Mobile Bottom Navigation Bar (< 840px) */}
-      <nav
-        aria-label="Mobile quick navigation"
-        className="m3-mobile-bottom-bar fixed right-0 bottom-0 left-0 z-30 h-15 border-t border-border bg-background/95 px-2 backdrop-blur-xs"
-      >
-        <div className="flex w-full items-center justify-around">
-          {mobileBarItems.map((item) => {
-            const isActive =
-              item.to === '/'
-                ? location.pathname === '/'
-                : location.pathname.startsWith(item.to);
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={cn(
-                  'flex min-w-[64px] flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors',
-                  isActive ? 'text-foreground font-semibold' : 'text-muted-foreground',
-                )}
-              >
-                <span className={cn(isActive && 'text-accent-text')}>{item.icon}</span>
-                <span>{item.shortLabel}</span>
-              </NavLink>
-            );
-          })}
-        </div>
-      </nav>
+      {/* Mobile Bottom Navigation Bar (< 840px); suppressed on auth forms so submit buttons stay unobstructed */}
+      {!['/login', '/register'].includes(location.pathname) && (
+        <nav
+          aria-label="Mobile quick navigation"
+          className="m3-mobile-bottom-bar fixed right-0 bottom-0 left-0 z-30 h-15 border-t border-border bg-background/95 px-2 backdrop-blur-xs"
+        >
+          <div className="flex w-full items-center justify-around">
+            {mobileBarItems.map((item) => {
+              const isActive =
+                item.to === '/'
+                  ? location.pathname === '/'
+                  : location.pathname.startsWith(item.to);
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={cn(
+                    'flex min-w-[64px] flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors',
+                    isActive ? 'text-foreground font-semibold' : 'text-muted-foreground',
+                  )}
+                >
+                  <span className={cn(isActive && 'text-accent-text')}>{item.icon}</span>
+                  <span>{item.shortLabel}</span>
+                </NavLink>
+              );
+            })}
+          </div>
+        </nav>
+      )}
 
       <EconomicsCalculatorModal isOpen={calcOpen} onClose={() => setCalcOpen(false)} />
     </div>

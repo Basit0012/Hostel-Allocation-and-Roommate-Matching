@@ -134,6 +134,7 @@ export const EconomicsCalculatorModal: React.FC<EconomicsCalculatorModalProps> =
           <button
             type="button"
             onClick={onClose}
+            aria-label="Close fee breakdown simulator"
             style={{
               background: 'none',
               border: 'none',

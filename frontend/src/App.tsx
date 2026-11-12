@@ -23,8 +23,11 @@ const PageLoader: React.FC = () => (
   </div>
 );
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+const ProtectedRoute: React.FC<{
+  children: React.ReactNode;
+  allowedRoles?: Array<'STUDENT' | 'WARDEN' | 'ADMIN'>;
+}> = ({ children, allowedRoles }) => {
+  const { user, isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -33,6 +36,10 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;
@@ -56,7 +63,7 @@ export const App: React.FC = () => {
                   <Route
                     path="/roommates"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['STUDENT']}>
                         <RoommatesPage />
                       </ProtectedRoute>
                     }
@@ -64,7 +71,7 @@ export const App: React.FC = () => {
                   <Route
                     path="/apply"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['STUDENT']}>
                         <ApplyPage />
                       </ProtectedRoute>
                     }

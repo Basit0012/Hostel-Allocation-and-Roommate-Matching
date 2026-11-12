@@ -112,6 +112,21 @@ def preferences_api_view(request):
     return JsonResponse({'error': 'Method not allowed.'}, status=405)
 
 
+def _serialize_candidate_match(candidate, score, is_room_aligned, target_room, has_pending):
+    """Serialize a roommate discovery match payload consistently for lookup and recommendations."""
+    cgpa = getattr(candidate.registry, 'cgpa', None)
+    return {
+        'student_id': candidate.student_id,
+        'full_name': candidate.registry.full_name,
+        'branch': candidate.registry.branch.name if candidate.registry.branch else '',
+        'cgpa': float(cgpa) if cgpa is not None else None,
+        'score': float(score) if score is not None else None,
+        'is_room_aligned': is_room_aligned,
+        'target_room': str(target_room) if target_room else None,
+        'has_pending_request': has_pending,
+    }
+
+
 @require_GET
 def discover_candidates_view(request):
     """
@@ -145,16 +160,9 @@ def discover_candidates_view(request):
                         sender=student, receiver=target, cycle=cycle, status=RequestStatus.PENDING
                     ).exists()
 
-                search_result = {
-                    'student_id': target.student_id,
-                    'full_name': target.registry.full_name,
-                    'branch': target.registry.branch.name if target.registry.branch else '',
-                    'cgpa': float(getattr(target.registry, 'cgpa', 0)) if getattr(target.registry, 'cgpa', None) is not None else None,
-                    'score': score.score_percentage if score else None,
-                    'is_room_aligned': is_aligned,
-                    'selected_room': str(target_room) if target_room else None,
-                    'has_pending_request': has_pending,
-                }
+                search_result = _serialize_candidate_match(
+                    target, score, is_aligned, target_room, has_pending
+                )
         except StudentProfile.DoesNotExist:
             pass
 
@@ -172,17 +180,15 @@ def discover_candidates_view(request):
         for r in recs:
             cand = r['student']
             has_pending = cand.pk in pending_cand_ids
-
-            recommendations.append({
-                'student_id': cand.student_id,
-                'full_name': cand.registry.full_name,
-                'branch': cand.registry.branch.name if cand.registry.branch else '',
-                'cgpa': float(getattr(cand.registry, 'cgpa', 0)) if getattr(cand.registry, 'cgpa', None) is not None else None,
-                'score': float(r['score']) if r.get('score') is not None else None,
-                'is_room_aligned': r['is_room_aligned'],
-                'target_room': str(r['target_room']) if r['target_room'] else None,
-                'has_pending_request': has_pending,
-            })
+            recommendations.append(
+                _serialize_candidate_match(
+                    cand,
+                    r.get('score'),
+                    r['is_room_aligned'],
+                    r['target_room'],
+                    has_pending,
+                )
+            )
 
     return JsonResponse({
         'has_preferences': has_pref,

@@ -1,6 +1,7 @@
 """
 Accounts Forms: Registration, Login, and Password Management forms.
 """
+import re
 from django import forms
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.password_validation import validate_password
@@ -46,6 +47,15 @@ class StudentRegistrationForm(forms.Form):
         max_length=20,
         required=False
     )
+
+    def clean_emergency_contact_phone(self):
+        phone = (self.cleaned_data.get('emergency_contact_phone') or '').strip()
+        if not phone:
+            return ''
+        normalized = re.sub(r'[\s\-()]', '', phone)
+        if not re.fullmatch(r'\+?[0-9]{10,15}', normalized):
+            raise ValidationError(_('Enter a valid phone number (10 to 15 digits, optional + prefix).'))
+        return phone
 
     def clean(self):
         cleaned_data = super().clean()
