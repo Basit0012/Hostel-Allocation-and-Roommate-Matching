@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { X } from 'lucide-react';
 
 interface ModalProps {
   isOpen: boolean;
@@ -13,7 +14,7 @@ export const Modal: React.FC<ModalProps> = ({
   onClose,
   title,
   children,
-  maxWidth = '550px',
+  maxWidth = '560px',
 }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -27,11 +28,15 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 1000,
-        backgroundColor: 'rgba(26, 26, 26, 0.65)',
+        backgroundColor: 'var(--md-sys-color-scrim)',
+        backdropFilter: 'blur(6px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -41,50 +46,55 @@ export const Modal: React.FC<ModalProps> = ({
     >
       <div
         style={{
-          backgroundColor: 'var(--surface)',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-modal)',
-          border: '1px solid var(--border-strong)',
+          backgroundColor: 'var(--surface-container-high)',
+          borderRadius: 'var(--md-sys-shape-corner-extra-large)',
+          boxShadow: 'var(--md-sys-elevation-4)',
+          border: '1px solid var(--outline-variant)',
           width: '100%',
           maxWidth,
           maxHeight: '90vh',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          animation: 'modalSlideIn 0.15s ease-out',
+          animation: 'modalSlideIn 260ms var(--md-sys-motion-easing-emphasized-decelerate)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         <div
           style={{
-            padding: '1rem 1.25rem',
-            borderBottom: '1px solid var(--border)',
+            padding: '1.25rem 1.5rem',
+            borderBottom: '1px solid var(--outline-variant)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            backgroundColor: 'var(--surface)',
+            backgroundColor: 'var(--surface-container)',
           }}
         >
-          <h3 style={{ margin: 0, fontSize: '1.125rem', fontFamily: 'var(--font-serif)', color: 'var(--ink)' }}>
+          <h3 className="m3-title-large" style={{ margin: 0, color: 'var(--on-surface)' }}>
             {title}
           </h3>
           <button
+            type="button"
             onClick={onClose}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              fontSize: '1.25rem',
-              cursor: 'pointer',
-              color: 'var(--text-muted)',
-              lineHeight: 1,
-              padding: '0.25rem',
-            }}
             aria-label="Close"
+            className="m3-btn"
+            style={{
+              width: '36px',
+              height: '36px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 'var(--radius-full)',
+              backgroundColor: 'var(--surface-container-highest)',
+              border: '1px solid var(--outline-variant)',
+              color: 'var(--on-surface-variant)',
+              cursor: 'pointer',
+            }}
           >
-            &times;
+            <X size={18} />
           </button>
         </div>
-        <div style={{ padding: '1.25rem', overflowY: 'auto' }}>{children}</div>
+        <div style={{ padding: '1.5rem', overflowY: 'auto' }}>{children}</div>
       </div>
     </div>
   );
