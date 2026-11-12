@@ -39,6 +39,7 @@ htmlcov/
 .codex/
 .cursor/
 .gemini/
+.opencode/
 
 # OS
 .DS_Store
@@ -48,3 +49,15 @@ Thumbs.db
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
+
+# Impeccable local config and runtime state (keep config.json, design.json, live/config.json tracked)
+.impeccable/config.local.json
+.impeccable/hook.cache.json
+.impeccable/hook.pending.json
+.impeccable/live/sessions/
+.impeccable/live/roots.json
+.impeccable/live/inject-journal.json
+.impeccable/questions/
+.impeccable/mocks/
+.impeccable/review/
+.impeccable/critique/snapshots/

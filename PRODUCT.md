@@ -8,62 +8,66 @@ web
 
 ## Users
 
-- **Primary User:** Undergraduate and postgraduate university students residing or planning to reside on campus at Lovely Professional University (LPU). They are in the critical transition period before or during an academic session, making high-stakes decisions about their living environment, annual budget, and roommates.
+- **Primary User:** Undergraduate and postgraduate university students residing or planning to reside on campus at Lovely Professional University (LPU). Students access the portal primarily on mobile devices over variable hostel Wi-Fi during time-sensitive intake windows, needing an immediate, calm answer to: "Is my room confirmed, and who is my roommate?"
 - **Secondary Users:**
-  - **Hostel Wardens:** Resident faculty/staff overseeing specific complexes (e.g. BH-1, GH-1), handling room inspections, verifying student eligibility, and signing off on delegated bed allocations.
-  - **University Administrators & Registrar:** Institutional authorities managing intake cycles, campus-wide bed capacity, disciplinary records, and electrical overage reconciliation.
+  - **Parents and Guardians:** Family or emergency contacts listed on student profiles who provide required parent consent (`parent_consent_at`) on overnight/leave outing gate passes (`GatePassWidget`).
+  - **Hostel Wardens:** Desktop-first residential faculty and staff overseeing assigned complexes (e.g., BH-1, GH-1), handling occupancy reviews, conflict and swap exception queues, outing gate pass verification, maintenance escalation tracking, and delegated allocation approvals.
+  - **University Administrators and Registrar:** Institutional authorities managing intake cycles, campus-wide bed capacity, student registry reconciliation, audit logs, and electrical overage accounting.
 
 ## Product Purpose
 
-Provide an authoritative, transparent, and seamless student-centric living portal that eliminates the ambiguity, manual paperwork, and roommate friction of university accommodation. Success means a student can explore all 14 residential complexes, evaluate exact fees and metered electrical allowances, find an aligned roommate via verified lifestyle dimensions, submit up to 3 prioritized room choices, and track their allocation with total confidence.
+Provide a transparent, calm university residential and living portal that removes guesswork, manual paperwork, and roommate uncertainty. Success means a student immediately sees their position across the allocation lifecycle (`Eligible -> Choices (max 3) -> Under Review -> Allocated -> Roommate -> Fee -> Confirmed`), inspects tower floors and rooms cleanly before selecting up to three ordered choices, calculates 10-month EDB and dining fees, finds an aligned roommate without exposing private details before mutual acceptance, and manages outing gate passes and maintenance tickets after move-in.
 
 ## Positioning
 
-Unlike generic off-the-shelf hostel or hotel booking systems, this platform is deeply specialized for university residential life:
-1. **Algorithmic Lifestyle Compatibility:** 7-factor deterministic roommate matching (sleep schedule 22%, cleanliness 17%, study habits 17%, noise tolerance 11%, dietary 11%, social 11%, AC temperature 11%) with strictly zero smoking references, enforcing same-gender safety and mutual room choice alignment.
-2. **Transparent Academic Session Economics:** Full visibility into 10-month session fee tiers, Early Decision Benefit (EDB) savings of ₹10,000, and individualized kilowatt-hour (kWh) electricity quotas with equitable roommate overage splitting.
-3. **Institutional Integrity:** Authoritative verification against official LPU Student Registry records, strict gender isolation (Boys Hostels BH-1 to BH-8, Girls Hostels GH-1 to GH-6), and multi-choice prioritized intake cycles.
+Unlike generic hotel or property booking software, this system models university residential governance and campus workflows:
+1. **Prioritized Intake Engine:** Students inspect tower blueprints and submit up to 3 ordered hostel/room choices reviewed and allocated by residential governance, rather than an unguided lottery.
+2. **Algorithmic Lifestyle Compatibility:** Deterministic 7-factor roommate matching (sleep schedule 22%, cleanliness 17%, study habits 17%, noise tolerance 11%, dietary 11%, social 11%, AC temperature 11%; zero smoking fields) with same-gender isolation and mutual consent before sharing personal details or forming a group.
+3. **Transparent Academic Session Economics:** 10-month tariff breakdown covering standard vs. Early Decision Benefit (EDB ₹10,000) rates, room electricity allowances (250 to 1,000 kWh), and Pro Bricks dining plan ratios.
+4. **Integrated Campus Living Operations:** Delegated warden approvals, parent-consented outing gate passes, and SLA-tracked maintenance ticketing inside one unified portal.
 
 ## Operating Context
 
-- **Academic Cycles:** Intake periods synchronized with university semesters (e.g. Fall 2026 / Academic Year 2026–27).
-- **Physical Environment:** 14 multi-storey residential complexes housing ~1,850+ beds across diverse configurations (1 to 8-seater standard rooms, studio apartments with pantries, and dormitories).
-- **Dining & Auxiliary Ecosystem:** Pro Bricks mess halls offering 6 regional Indian cuisines (North Indian, South Indian, Rajasthani, Haryanvi, Gujarati, Eastern) and customizable meal plans (2, 3, 4 meals or à la carte).
-- **Regulatory Environment:** Campus safety protocols enforcing strict contraband restrictions (immersion heating rods and induction cooktops strictly banned; laptops, electric kettles, and clothes irons allowed).
+- **Academic Cycles:** Intake cycles synchronized with university semesters (for example Academic Year 2026-27).
+- **Physical Environment:** Campus -> Hostel Complex -> Block -> Floor -> Room -> Bed hierarchy across Boys (`BH-1` to `BH-8`) and Girls (`GH-1` to `GH-6`) complexes.
+- **Pro Bricks Centralized Dining (`views_living.py`):** Six regional Indian cuisines: North Indian Royal Feast (₹4,500/mo), South Indian Traditional (₹4,400/mo), Rajasthani Marwari Thali (₹4,600/mo), Kathiyawadi & Gujarati Sattvik (₹4,400/mo), Haryanvi Desi Diet (₹4,600/mo), and Eastern & Bengali Coastal (₹4,800/mo), paired with 4 Meals (100%), 3 Meals (85%), or 2 Meals (65%) meal plan multipliers.
+- **Regulatory & Appliance Policy *(unverified, confirm with warden/DSA)*:** No policy table or backend rule source currently exists in the codebase. Until confirmed with the hostel warden and Division of Student Affairs (DSA), treat immersion heating rods, induction cooktops, space heaters, and electric irons as prohibited everywhere across the UI from one shared constants file (`hostelRules.ts`). Permitted-appliance exceptions are omitted until an authoritative policy source is confirmed; do not invent other hostel rules.
+- **Production Runtime Boundaries:** React/Vite TypeScript SPA frontend hosted on Vercel communicating with a Django API on Railway backed by Supabase PostgreSQL.
 
 ## Capabilities and Constraints
 
-- **Hostel Inventory Hierarchy:** Campus $\rightarrow$ Hostel Complex $\rightarrow$ Block $\rightarrow$ Floor $\rightarrow$ Room Unit $\rightarrow$ Individual Bed (A, B, C...).
-- **Room Configurations:**
-  - Capacities: 1, 2, 3, 4, 5, 6, 7, and 8-seaters.
-  - Categories: Standard Room, Studio Apartment (pantry + attached washroom), Dormitory (common washroom).
-  - Cooling: Air-Conditioned (AC) vs Air-Cooled.
-  - Electricity Quotas: 250 kWh to 1,000 kWh per 10-month session based on room seater and cooling type.
-- **Application Engine:** Up to 3 prioritized choices per student per intake cycle. Immutable audit trail on all status transitions (Draft $\rightarrow$ Submitted $\rightarrow$ Under Review $\rightarrow$ Approved $\rightarrow$ Allocated / Waitlisted).
-- **Roommate Matching Engine:** Direct student ID search and algorithmic discovery feed; mutual request handshake required before atomic group locking; groups bounded by target room capacity (2–4 beds).
-- **Security & Authorization:** Session-based authentication with dual-identity login (institutional email or Student ID), CSRF protection, and strict Role-Based Access Control (Student, Warden, Admin).
+- **Student Allocation Flow (Existing Application Engine):** Follow the existing intake engine: `Eligible -> Choices (max 3) -> Under Review -> Allocated -> Roommate -> Fee -> Confirmed`. Submissions transition through auditable backend states (`SUBMITTED`, `UNDER_REVIEW`, `ALLOCATED`, `WAITLISTED`, `CANCELLED`). Because no backend payment settlement or post-fee check-in confirmation model exists yet, UI stage rails must display `Fee` and `Confirmed` honestly as `Not tracked yet` rather than simulating progress.
+- **CAD Floor Inspector & Choice Picking:** `ArchitecturalFloorPlan` and `RoomInspectionModal` let students inspect wings, rooms, vacancies, and fees, then select a room/tower to populate Priority Choice #1-#3 on `/apply`. *(Note: No Three.js or React Three Fiber package exists in `frontend/package.json` yet; planned 3D bed/room viewing must ship 2D floor-plan inspection first with graceful fallback.)*
+- **Future Locking Scope (Not in v1):** Server-backed real-time bed locking and temporary hold timers do **not** exist in the backend. Never implement optimistic client-only locks or v1 hold countdown bars; treat real-time bed locking strictly as a future backend+frontend feature.
+- **Room Configurations:** 1 to 8-seaters across Standard Rooms, Studio Apartments (pantry + attached washroom), and Dormitories (common washroom); Air-Conditioned (AC) vs. Air-Cooled; 250 kWh to 1,000 kWh 10-month electricity quotas.
+- **Roommate Matching Engine:** 7-factor weighted preferences (`sleeping_schedule`, `cleanliness`, `study_habits`, `noise_tolerance`, `food_preference`, `social_preference`, `temperature_pref`), direct Student Roll ID lookup, ranked candidate recommendations returning overall compatibility percentage (`score`) and `is_room_aligned` (per-factor breakdown and dealbreakers do not exist in the API yet), plus mutual invitation acceptance before forming a group bounded by target room capacity. Personal phone numbers and private contact details remain hidden until mutual acceptance.
+- **Digital Outing Gate Passes (`GatePassWidget` / `/api/gatepass/`):** `DAY_PASS`, `NIGHT_OUT`, `LEAVE`, and `EMERGENCY` workflows tracking parent consent (`parent_consent_at`), warden review, exit/return timestamps, and QR tokens.
+- **Room Maintenance & SLA Tickets (`RMSDeskWidget` / `/api/rms/tickets/`):** Trade-categorized repair tracking matching `backend/apps/hostels/models.py` (`PLUMBING`, `ELECTRICAL`, `WIFI_LAN`, `CARPENTRY`, `APPLIANCE`, `PEST_CONTROL`) with SLA deadlines and escalations.
+- **Residential Economics Calculator (`EconomicsCalculatorModal` / `/api/economics/calculator/`):** Calculates 10-month room tariff, EDB discount, Pro Bricks dining plan cost, and kWh overage estimates.
+- **Warden Command Center (`WardenCommandCenter`):** Desktop-first tower-scoped operations desk for monitoring complex census, outing pass sign-offs, maintenance SLA queues, and delegated approvals.
+- **Security & Authorization:** Session-based authentication (Student ID or `@lpu.in` email), CSRF enforcement, and strict Role-Based Access Control (`STUDENT`, `WARDEN`, `ADMIN`).
 
 ## Brand Commitments
 
-- **Institutional Identity:** Official residential portal of Lovely Professional University (LPU).
-- **Visual Tone:** Academic, authoritative, crisp, and welcoming. Primary palette rooted in Academic Navy (`#1e3a8a`) and Royal Blue (`#2563eb`), supported by clean slate neutrals and distinct status indicators.
-- **Copy Voice:** Direct, respectful, empowering, and unambiguous. Educational terms match official university handbooks without administrative jargon.
+- **Institutional Identity:** Campus housing portal for Lovely Professional University (LPU). *(Color tokens, typography, borders, and layout geometry are specified strictly in `DESIGN.md`, not here.)*
+- **Copy Voice & Rules:** Plain, calm, notice-board and university-handbook prose. Never use exclamation marks, playful or apologetic error phrasing ("Oops"), emoji navigation icons, invented statistics or testimonials, or em dashes in UI copy.
 
-## Evidence on Hand
+## Demo and Seeded Data
 
-- **Campus Inventory Data:** 14 active residential towers (BH-1 to BH-8, GH-1 to GH-6), 476 rooms, and 1,858 beds seeded in database.
-- **Official Fee Schedule:** Verified 10-month session fee matrix including Early Decision Benefits and kilowatt-hour electricity allowances.
-- **Authoritative Student Registry:** Pre-configured student records across departments (Computer Science, Mechanical, Electronics, Civil, Biotechnology).
+*(All inventory figures, fee numbers, dining rates, and sample student profiles below are seeded demo data generated by `backend/apps/hostels/management/commands/seed_demo_data.py` and `backend/apps/api/views_living.py`, not confirmed LPU figures.)*
+- **Seeded Campus Inventory:** 14 sample residential towers (`BH-1` to `BH-8`, `GH-1` to `GH-6`), 476 rooms, and 1,858 beds across varied capacity/cooling tiers.
+- **Sample Tariff & Dining Fixtures:** Pre-configured 10-month sample fee tiers (with ₹10,000 EDB delta and 250–1,000 kWh sample quotas) plus the 6 regional cuisine monthly reference rates in `views_living.py`.
+- **Demo Accounts & Student Cohort:** Pre-seeded student, warden, and admin registry records across engineering and sciences departments for sandbox testing and verification.
 
 ## Product Principles
 
-1. **Student Clarity Over Administrative Friction:** Present fees, rules, quotas, and bed vacancies plainly upfront so students never encounter surprise charges or opaque decisions.
-2. **Deterministic, Respectful Compatibility:** Pair students based on scientifically weighted lifestyle harmony rather than superficial filters, preserving personal dignity and quiet comfort.
-3. **Integrity at Every Transaction Boundary:** Guarantee concurrency safety and atomicity—no bed can ever be double-allocated, and room alignment must be mutual.
-4. **Lean, Zero-Slop Execution:** Prioritize fast rendering, accessible navigation, and semantic HTML/CSS tokens over bloated dependencies or unnecessary visual fluff.
+1. **Answer Status Before Choices:** Lead student screens with clear current allocation status, stage position, and next action rather than promotional framing.
+2. **Truthful Server State Over Optimism:** Reflect real backend application states and room inventory cleanly without simulating unavailable locks or unverified policy claims.
+3. **Consent & Privacy First:** Withhold personal peer contact details until mutual roommate acceptance and require parent/warden approvals along documented gate-pass state boundaries.
+4. **Resilient Across Devices:** Keep student allocation journeys fast on mobile devices over slow hostel Wi-Fi while making warden operational tables dense and keyboard-efficient on desktop.
 
 ## Accessibility & Inclusion
 
-- Adhere to WCAG 2.1 AA standards for contrast ratios (minimum 4.5:1 for body copy).
-- Provide explicit keyboard focus indicators, screen-reader friendly form controls, and aria-expanded state attributes.
-- Ensure all color-coded badges (e.g. Vacant vs Full, AC vs Cooler) include accompanying readable text labels.
+- Meet WCAG 2.1 AA contrast ratios (>= 4.5:1 for body text) with crisp visible keyboard focus rings.
+- Enforce minimum 44px touch targets for mobile selection and confirmation controls.
+- Pair every status state (`Available`, `Locked`, `Taken`, `Yours`) with an explicit text label and distinct icon or pattern rather than color alone, and respect `prefers-reduced-motion`.
