@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { livingApi } from '../../api/livingApi';
 import { GatePassItem, PassType } from '../../types/living';
-import { QrCode, Plus, Clock, CheckCircle2, AlertCircle, X, ShieldCheck } from 'lucide-react';
+import { QrCode, Plus, ShieldCheck } from 'lucide-react';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
+import { Card } from '../common/Card';
+import { Modal } from '../common/Modal';
 
 export const GatePassWidget: React.FC = () => {
   const [passes, setPasses] = useState<GatePassItem[]>([]);
@@ -11,7 +13,6 @@ export const GatePassWidget: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedPassForQr, setSelectedPassForQr] = useState<GatePassItem | null>(null);
 
-  // Form State
   const [passType, setPassType] = useState<PassType>('DAY_PASS');
   const [destination, setDestination] = useState('');
   const [reason, setReason] = useState('');
@@ -62,89 +63,71 @@ export const GatePassWidget: React.FC = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'APPROVED':
-        return <Badge variant="success">Approved</Badge>;
+        return <Badge variant="success" size="sm">Approved</Badge>;
       case 'ACTIVE_OUTSIDE':
-        return <Badge variant="warning">Outside Campus</Badge>;
+        return <Badge variant="warning" size="sm">Outside Campus</Badge>;
       case 'PENDING_WARDEN':
-        return <Badge variant="warning">Pending Warden</Badge>;
+        return <Badge variant="warning" size="sm">Pending Warden</Badge>;
       case 'PENDING_PARENT':
-        return <Badge variant="warning">Pending Parent</Badge>;
+        return <Badge variant="warning" size="sm">Pending Parent</Badge>;
       case 'CLOSED_RETURNED':
-        return <Badge variant="neutral">Returned</Badge>;
+        return <Badge variant="neutral" size="sm">Returned</Badge>;
       case 'REJECTED':
-        return <Badge variant="danger">Rejected</Badge>;
+        return <Badge variant="danger" size="sm">Rejected</Badge>;
       default:
-        return <Badge variant="neutral">{status}</Badge>;
+        return <Badge variant="neutral" size="sm">{status}</Badge>;
     }
   };
 
   return (
-    <div
-      style={{
-        backgroundColor: '#FFFFFF',
-        border: '1px solid var(--border)',
-        borderRadius: 'var(--radius-md)',
-        padding: '1.25rem',
-        boxShadow: 'var(--shadow-sm)',
-      }}
-    >
+    <Card variant="outlined" style={{ height: '100%' }}>
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: '1rem',
-          paddingBottom: '0.75rem',
-          borderBottom: '1px solid var(--border)',
+          paddingBottom: '0.85rem',
+          borderBottom: '1px solid var(--outline-variant)',
+          gap: '0.75rem',
+          flexWrap: 'wrap',
         }}
       >
         <div>
-          <span
-            style={{
-              fontFamily: 'monospace',
-              fontSize: '0.6875rem',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              color: 'var(--primary)',
-            }}
-          >
+          <span className="m3-label-small" style={{ color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             Turnstile Access
           </span>
-          <h3
-            style={{
-              fontFamily: 'var(--font-serif)',
-              fontSize: '1.125rem',
-              fontWeight: 700,
-              margin: '0.2rem 0 0',
-              color: 'var(--ink)',
-            }}
-          >
-            Digital Gate Pass & Outing Hub
+          <h3 className="m3-title-large" style={{ margin: '0.15rem 0 0' }}>
+            Digital Gate Pass Hub
           </h3>
         </div>
 
-        <Button size="sm" variant="secondary" onClick={() => setShowModal(true)}>
-          <Plus size={14} style={{ marginRight: '0.25rem' }} />
+        <Button size="sm" variant="tonal" onClick={() => setShowModal(true)}>
+          <Plus size={15} />
           Request Outing
         </Button>
       </div>
 
       {isLoading ? (
-        <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
+        <div className="m3-body-medium" style={{ padding: '1.25rem', textAlign: 'center' }}>
           Loading gate pass credentials...
         </div>
       ) : passes.length === 0 ? (
         <div
           style={{
-            padding: '1.5rem',
+            padding: '1.75rem 1.25rem',
             textAlign: 'center',
-            backgroundColor: '#FAF8F5',
-            border: '1px dashed var(--border)',
-            borderRadius: '2px',
+            backgroundColor: 'var(--surface-container-low)',
+            border: '1px dashed var(--outline-variant)',
+            borderRadius: 'var(--md-sys-shape-corner-large)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '0.75rem',
           }}
         >
-          <p style={{ margin: '0 0 0.5rem', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+          <ShieldCheck size={24} color="var(--primary)" />
+          <p className="m3-body-medium" style={{ margin: 0 }}>
             No active or past gate passes on record.
           </p>
           <Button size="sm" variant="primary" onClick={() => setShowModal(true)}>
@@ -160,119 +143,74 @@ export const GatePassWidget: React.FC = () => {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '0.75rem 1rem',
-                backgroundColor: '#FAF8F5',
-                border: '1px solid var(--border)',
-                borderRadius: '2px',
+                gap: '0.75rem',
+                padding: '0.85rem 1rem',
+                backgroundColor: 'var(--surface-container-low)',
+                border: '1px solid var(--outline-variant)',
+                borderRadius: 'var(--md-sys-shape-corner-medium)',
+                flexWrap: 'wrap',
               }}
             >
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
-                  <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--ink)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
+                  <span className="m3-title-small" style={{ color: 'var(--on-surface)' }}>
                     {p.destination}
                   </span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    ({p.pass_type_display})
-                  </span>
+                  <span className="m3-body-small">({p.pass_type_display})</span>
                   {getStatusBadge(p.status)}
                 </div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                  Expected: {new Date(p.departure_date).toLocaleDateString()} — {new Date(p.expected_return_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                <div className="m3-body-small tabular-nums">
+                  Expected: {new Date(p.departure_date).toLocaleDateString()}  · {' '}
+                  {new Date(p.expected_return_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
 
               {p.qr_token && (
-                <button
-                  type="button"
-                  onClick={() => setSelectedPassForQr(p)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    padding: '0.35rem 0.65rem',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    backgroundColor: '#fff',
-                    border: '1px solid var(--border-strong)',
-                    borderRadius: '2px',
-                    cursor: 'pointer',
-                    color: 'var(--ink)',
-                  }}
-                >
-                  <QrCode size={14} color="var(--primary)" />
+                <Button size="sm" variant="outline" onClick={() => setSelectedPassForQr(p)}>
+                  <QrCode size={14} />
                   QR Pass
-                </button>
+                </Button>
               )}
             </div>
           ))}
         </div>
       )}
 
-      {/* QR Code Presentation Modal */}
-      {selectedPassForQr && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(26, 26, 26, 0.7)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1100,
-            padding: '1rem',
-          }}
-          onClick={() => setSelectedPassForQr(null)}
-        >
-          <div
-            style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '4px',
-              padding: '1.75rem',
-              maxWidth: '380px',
-              width: '100%',
-              textAlign: 'center',
-              border: '2px solid var(--border)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-              <span style={{ fontFamily: 'monospace', fontSize: '0.6875rem', fontWeight: 700, color: 'var(--primary)' }}>
-                MAIN SECURITY GATE TURNSTILE TOKEN
-              </span>
-              <button
-                type="button"
-                onClick={() => setSelectedPassForQr(null)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            {/* Turnstile QR Code Render */}
+      {/* Turnstile QR Code Dialog */}
+      <Modal
+        isOpen={Boolean(selectedPassForQr)}
+        onClose={() => setSelectedPassForQr(null)}
+        title="Security Turnstile Token"
+        maxWidth="390px"
+      >
+        {selectedPassForQr && (
+          <div style={{ textAlign: 'center' }}>
             <div
               style={{
-                width: '180px',
-                height: '180px',
+                width: '188px',
+                height: '188px',
                 margin: '0 auto 1.25rem',
-                backgroundColor: '#000',
-                padding: '10px',
+                backgroundColor: 'var(--md-sys-color-on-surface)',
+                padding: '12px',
+                borderRadius: 'var(--md-sys-shape-corner-large)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                borderRadius: '4px',
               }}
             >
               <div
                 style={{
                   width: '100%',
                   height: '100%',
-                  backgroundColor: '#fff',
+                  backgroundColor: '#FFFFFF',
+                  color: '#111827',
+                  borderRadius: 'var(--md-sys-shape-corner-small)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontFamily: 'monospace',
-                  fontSize: '0.625rem',
-                  padding: '8px',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.6875rem',
+                  padding: '10px',
                   wordBreak: 'break-all',
                 }}
               >
@@ -280,184 +218,123 @@ export const GatePassWidget: React.FC = () => {
               </div>
             </div>
 
-            <h4 style={{ margin: '0 0 0.25rem', fontFamily: 'var(--font-serif)', fontSize: '1.125rem' }}>
+            <h4 className="m3-title-large" style={{ margin: '0 0 0.25rem' }}>
               {selectedPassForQr.destination}
             </h4>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+            <p className="m3-body-small" style={{ margin: '0 0 1.25rem' }}>
               Present this encrypted token at campus turnstiles (Gate 1, 2, or 4).
-            </div>
-
-            <Button variant="secondary" size="sm" onClick={() => setSelectedPassForQr(null)}>
-              Close
+            </p>
+            <Button variant="tonal" size="md" onClick={() => setSelectedPassForQr(null)}>
+              Done
             </Button>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {/* Outing Request Modal */}
-      {showModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(26, 26, 26, 0.7)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1100,
-            padding: '1rem',
-          }}
-          onClick={() => setShowModal(false)}
-        >
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title="Apply for Campus Outing Pass"
+        maxWidth="490px"
+      >
+        {errorMsg && (
           <div
+            className="m3-body-small"
             style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '4px',
-              maxWidth: '480px',
-              width: '100%',
-              padding: '1.5rem',
-              border: '1px solid var(--border)',
+              padding: '0.75rem 0.9rem',
+              backgroundColor: 'var(--error-container)',
+              color: 'var(--on-error-container)',
+              borderRadius: 'var(--md-sys-shape-corner-medium)',
+              marginBottom: '1rem',
             }}
-            onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-              <h3 style={{ fontFamily: 'var(--font-serif)', margin: 0, fontSize: '1.25rem' }}>
-                Apply for Campus Outing Pass
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowModal(false)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {errorMsg && (
-              <div
-                style={{
-                  padding: '0.5rem 0.75rem',
-                  backgroundColor: '#FBE9E8',
-                  color: 'var(--status-danger)',
-                  fontSize: '0.75rem',
-                  borderRadius: '2px',
-                  marginBottom: '1rem',
-                }}
-              >
-                {errorMsg}
-              </div>
-            )}
-
-            <form onSubmit={handleCreatePass}>
-              <div style={{ marginBottom: '0.85rem' }}>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.25rem' }}>
-                  Pass Type
-                </label>
-                <select
-                  value={passType}
-                  onChange={(e) => setPassType(e.target.value as PassType)}
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem',
-                    border: '1px solid var(--border-strong)',
-                    fontSize: '0.8125rem',
-                  }}
-                >
-                  <option value="DAY_PASS">Day Pass (Return before 09:30 PM)</option>
-                  <option value="NIGHT_OUT">Night Out (Return next morning)</option>
-                  <option value="LEAVE">Official Leave / Home Visit</option>
-                  <option value="EMERGENCY">Emergency Exit</option>
-                </select>
-              </div>
-
-              <div style={{ marginBottom: '0.85rem' }}>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.25rem' }}>
-                  Destination (e.g., Jalandhar City / Phagwara / Hometown)
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
-                  placeholder="e.g. Model Town, Jalandhar"
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem',
-                    border: '1px solid var(--border-strong)',
-                    fontSize: '0.8125rem',
-                  }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '0.85rem' }}>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.25rem' }}>
-                  Reason for Outing
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder="e.g. Doctor appointment, Academic books purchase"
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem',
-                    border: '1px solid var(--border-strong)',
-                    fontSize: '0.8125rem',
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.25rem' }}>
-                    Departure Date & Time
-                  </label>
-                  <input
-                    type="datetime-local"
-                    required
-                    value={departureDate}
-                    onChange={(e) => setDepartureDate(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.45rem',
-                      border: '1px solid var(--border-strong)',
-                      fontSize: '0.75rem',
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.25rem' }}>
-                    Expected Return
-                  </label>
-                  <input
-                    type="datetime-local"
-                    required
-                    value={expectedReturnDate}
-                    onChange={(e) => setExpectedReturnDate(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.45rem',
-                      border: '1px solid var(--border-strong)',
-                      fontSize: '0.75rem',
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" variant="primary" disabled={submitting}>
-                  {submitting ? 'Submitting...' : 'Submit Request'}
-                </Button>
-              </div>
-            </form>
+            {errorMsg}
           </div>
-        </div>
-      )}
-    </div>
+        )}
+
+        <form onSubmit={handleCreatePass} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+          <div>
+            <label className="m3-label-medium" style={{ display: 'block', marginBottom: '0.35rem', color: 'var(--on-surface)' }}>
+              Pass Type
+            </label>
+            <select
+              value={passType}
+              onChange={(e) => setPassType(e.target.value as PassType)}
+              style={{ width: '100%', padding: '0.6rem 0.75rem', fontSize: '0.875rem' }}
+            >
+              <option value="DAY_PASS">Day Pass (Return before 09:30 PM)</option>
+              <option value="NIGHT_OUT">Night Out (Return next morning)</option>
+              <option value="LEAVE">Official Leave / Home Visit</option>
+              <option value="EMERGENCY">Emergency Exit</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="m3-label-medium" style={{ display: 'block', marginBottom: '0.35rem', color: 'var(--on-surface)' }}>
+              Destination (e.g., Jalandhar City / Phagwara / Hometown)
+            </label>
+            <input
+              type="text"
+              required
+              value={destination}
+              onChange={(e) => setDestination(e.target.value)}
+              placeholder="e.g. Model Town, Jalandhar"
+              style={{ width: '100%', padding: '0.6rem 0.75rem', fontSize: '0.875rem' }}
+            />
+          </div>
+
+          <div>
+            <label className="m3-label-medium" style={{ display: 'block', marginBottom: '0.35rem', color: 'var(--on-surface)' }}>
+              Reason for Outing
+            </label>
+            <input
+              type="text"
+              required
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="e.g. Doctor appointment, Academic books purchase"
+              style={{ width: '100%', padding: '0.6rem 0.75rem', fontSize: '0.875rem' }}
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
+            <div>
+              <label className="m3-label-medium" style={{ display: 'block', marginBottom: '0.35rem', color: 'var(--on-surface)' }}>
+                Departure Date &amp; Time
+              </label>
+              <input
+                type="datetime-local"
+                required
+                value={departureDate}
+                onChange={(e) => setDepartureDate(e.target.value)}
+                style={{ width: '100%', padding: '0.55rem 0.65rem', fontSize: '0.8125rem' }}
+              />
+            </div>
+            <div>
+              <label className="m3-label-medium" style={{ display: 'block', marginBottom: '0.35rem', color: 'var(--on-surface)' }}>
+                Expected Return
+              </label>
+              <input
+                type="datetime-local"
+                required
+                value={expectedReturnDate}
+                onChange={(e) => setExpectedReturnDate(e.target.value)}
+                style={{ width: '100%', padding: '0.55rem 0.65rem', fontSize: '0.8125rem' }}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+            <Button type="button" variant="text" onClick={() => setShowModal(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" isLoading={submitting}>
+              {submitting ? 'Submitting...' : 'Submit Request'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+    </Card>
   );
 };
-

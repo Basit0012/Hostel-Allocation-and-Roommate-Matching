@@ -59,8 +59,8 @@ export const EconomicsCalculatorModal: React.FC<EconomicsCalculatorModalProps> =
         style={{
           position: 'fixed',
           inset: 0,
-          backgroundColor: 'rgba(26, 26, 26, 0.7)',
-          backdropFilter: 'blur(3px)',
+          backgroundColor: 'var(--md-sys-color-scrim)',
+          backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -75,14 +75,15 @@ export const EconomicsCalculatorModal: React.FC<EconomicsCalculatorModalProps> =
           exit={{ opacity: 0, scale: 0.96, y: 10 }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
           style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: '4px',
-            border: '1px solid var(--border)',
+            backgroundColor: 'var(--surface-container-high)',
+            borderRadius: 'var(--md-sys-shape-corner-extra-large)',
+            border: '1px solid var(--outline-variant)',
             width: '100%',
             maxWidth: '780px',
             maxHeight: '92vh',
             overflowY: 'auto',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            overflowX: 'hidden',
+            boxShadow: 'var(--md-sys-elevation-3)',
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -90,24 +91,24 @@ export const EconomicsCalculatorModal: React.FC<EconomicsCalculatorModalProps> =
         <div
           style={{
             padding: '1.25rem 1.5rem',
-            borderBottom: '1px solid var(--border)',
+            borderBottom: '1px solid var(--outline-variant)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            backgroundColor: '#FAF8F5',
+            backgroundColor: 'var(--surface-container)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div
               style={{
-                width: '36px',
-                height: '36px',
-                backgroundColor: 'var(--brand)',
-                color: '#fff',
+                width: '40px',
+                height: '40px',
+                backgroundColor: 'var(--primary-container)',
+                color: 'var(--on-primary-container)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                borderRadius: '2px',
+                borderRadius: 'var(--md-sys-shape-corner-medium)',
               }}
             >
               <Calculator size={20} />
@@ -172,13 +173,13 @@ export const EconomicsCalculatorModal: React.FC<EconomicsCalculatorModalProps> =
                       type="button"
                       onClick={() => setSeater(s)}
                       style={{
-                        padding: '0.5rem',
+                        padding: '0.5rem 0.65rem',
                         fontSize: '0.8125rem',
                         fontWeight: seater === s ? 700 : 500,
-                        border: `1px solid ${seater === s ? 'var(--primary)' : 'var(--border)'}`,
-                        backgroundColor: seater === s ? '#FFF5ED' : '#fff',
-                        color: seater === s ? 'var(--primary)' : 'var(--text)',
-                        borderRadius: '2px',
+                        border: `1px solid ${seater === s ? 'var(--primary)' : 'var(--outline-variant)'}`,
+                        backgroundColor: seater === s ? 'var(--primary-container)' : 'var(--surface-container-lowest)',
+                        color: seater === s ? 'var(--on-primary-container)' : 'var(--on-surface)',
+                        borderRadius: 'var(--radius-pill)',
                         cursor: 'pointer',
                       }}
                     >
@@ -213,13 +214,13 @@ export const EconomicsCalculatorModal: React.FC<EconomicsCalculatorModalProps> =
                       type="button"
                       onClick={() => setCooling(c.id)}
                       style={{
-                        padding: '0.5rem',
+                        padding: '0.5rem 0.65rem',
                         fontSize: '0.8125rem',
                         fontWeight: cooling === c.id ? 700 : 500,
-                        border: `1px solid ${cooling === c.id ? 'var(--primary)' : 'var(--border)'}`,
-                        backgroundColor: cooling === c.id ? '#FFF5ED' : '#fff',
-                        color: cooling === c.id ? 'var(--primary)' : 'var(--text)',
-                        borderRadius: '2px',
+                        border: `1px solid ${cooling === c.id ? 'var(--primary)' : 'var(--outline-variant)'}`,
+                        backgroundColor: cooling === c.id ? 'var(--primary-container)' : 'var(--surface-container-lowest)',
+                        color: cooling === c.id ? 'var(--on-primary-container)' : 'var(--on-surface)',
+                        borderRadius: 'var(--radius-pill)',
                         cursor: 'pointer',
                       }}
                     >
@@ -233,9 +234,9 @@ export const EconomicsCalculatorModal: React.FC<EconomicsCalculatorModalProps> =
               <div
                 style={{
                   padding: '0.75rem 1rem',
-                  backgroundColor: '#E7F2EA',
-                  border: '1px solid #1E6B3A',
-                  borderRadius: '2px',
+                  backgroundColor: 'var(--md-sys-color-success-container)',
+                  border: '1px solid var(--md-sys-color-success)',
+                  borderRadius: 'var(--md-sys-shape-corner-medium)',
                   marginBottom: '1.25rem',
                   display: 'flex',
                   alignItems: 'center',
@@ -244,12 +245,12 @@ export const EconomicsCalculatorModal: React.FC<EconomicsCalculatorModalProps> =
               >
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <Sparkles size={14} color="#1E6B3A" />
-                    <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#1E6B3A' }}>
+                    <Sparkles size={14} color="var(--md-sys-color-on-success-container)" />
+                    <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--md-sys-color-on-success-container)' }}>
                       Early Decision Benefit (EDB)
                     </span>
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#27272A' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-success-container)', opacity: 0.9 }}>
                     Instant ₹10,000 fee waiver for early session commitments.
                   </div>
                 </div>
@@ -257,7 +258,7 @@ export const EconomicsCalculatorModal: React.FC<EconomicsCalculatorModalProps> =
                   type="checkbox"
                   checked={isEdb}
                   onChange={(e) => setIsEdb(e.target.checked)}
-                  style={{ width: '18px', height: '18px', accentColor: '#1E6B3A', cursor: 'pointer' }}
+                  style={{ width: '18px', height: '18px', accentColor: 'var(--md-sys-color-success)', cursor: 'pointer' }}
                 />
               </div>
 
@@ -282,19 +283,19 @@ export const EconomicsCalculatorModal: React.FC<EconomicsCalculatorModalProps> =
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',
-                    borderRadius: '2px',
-                    border: '1px solid var(--border-strong)',
+                    borderRadius: 'var(--md-sys-shape-corner-medium)',
+                    border: '1px solid var(--outline)',
                     fontSize: '0.8125rem',
-                    backgroundColor: '#fff',
-                    color: 'var(--ink)',
+                    backgroundColor: 'var(--surface-container-lowest)',
+                    color: 'var(--on-surface)',
                   }}
                 >
                   {calcResult?.mess?.available_cuisines.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name} — ₹{c.monthly_fee}/month
+                      {c.name} · ₹{c.monthly_fee}/month
                     </option>
                   )) || (
-                    <option value="NORTH_INDIAN">North Indian Royal Feast — ₹4,500/month</option>
+                    <option value="NORTH_INDIAN">North Indian Royal Feast · ₹4,500/month</option>
                   )}
                 </select>
               </div>
@@ -325,13 +326,13 @@ export const EconomicsCalculatorModal: React.FC<EconomicsCalculatorModalProps> =
                       type="button"
                       onClick={() => setMealPlan(m.id)}
                       style={{
-                        padding: '0.4rem',
+                        padding: '0.45rem',
                         fontSize: '0.75rem',
                         fontWeight: mealPlan === m.id ? 700 : 500,
-                        border: `1px solid ${mealPlan === m.id ? 'var(--primary)' : 'var(--border)'}`,
-                        backgroundColor: mealPlan === m.id ? '#FFF5ED' : '#fff',
-                        color: mealPlan === m.id ? 'var(--primary)' : 'var(--text)',
-                        borderRadius: '2px',
+                        border: `1px solid ${mealPlan === m.id ? 'var(--primary)' : 'var(--outline-variant)'}`,
+                        backgroundColor: mealPlan === m.id ? 'var(--primary-container)' : 'var(--surface-container-lowest)',
+                        color: mealPlan === m.id ? 'var(--on-primary-container)' : 'var(--on-surface)',
+                        borderRadius: 'var(--radius-pill)',
                         cursor: 'pointer',
                       }}
                     >
@@ -386,9 +387,9 @@ export const EconomicsCalculatorModal: React.FC<EconomicsCalculatorModalProps> =
             {/* Right Column: Real-Time Cost Summary & Transparency Breakdown */}
             <div
               style={{
-                backgroundColor: '#FAF9F6',
-                border: '1px solid var(--border)',
-                borderRadius: '2px',
+                backgroundColor: 'var(--surface-container-lowest)',
+                border: '1px solid var(--outline-variant)',
+                borderRadius: 'var(--md-sys-shape-corner-large)',
                 padding: '1.25rem',
                 display: 'flex',
                 flexDirection: 'column',
@@ -417,7 +418,7 @@ export const EconomicsCalculatorModal: React.FC<EconomicsCalculatorModalProps> =
                       10-Month Room Fee ({seater}S {cooling === 'AIR_CONDITIONED' ? 'AC' : 'Cooler'})
                     </span>
                     <span style={{ fontWeight: 600, color: 'var(--ink)' }}>
-                      ₹{calcResult?.pricing.applicable_hostel_fee.toLocaleString('en-IN') ?? '—'}
+                      ₹{calcResult?.pricing.applicable_hostel_fee.toLocaleString('en-IN') ?? '·'}
                     </span>
                   </div>
 
@@ -428,7 +429,7 @@ export const EconomicsCalculatorModal: React.FC<EconomicsCalculatorModalProps> =
                         display: 'flex',
                         justifyContent: 'space-between',
                         fontSize: '0.8125rem',
-                        color: '#1E6B3A',
+                        color: 'var(--md-sys-color-success)',
                       }}
                     >
                       <span>Early Decision Benefit (EDB)</span>
@@ -447,7 +448,7 @@ export const EconomicsCalculatorModal: React.FC<EconomicsCalculatorModalProps> =
                       </span>
                     </div>
                     <span style={{ fontWeight: 600, color: 'var(--ink)' }}>
-                      ₹{calcResult?.mess.session_10_month_fee.toLocaleString('en-IN') ?? '—'}
+                      ₹{calcResult?.mess.session_10_month_fee.toLocaleString('en-IN') ?? '·'}
                     </span>
                   </div>
 
@@ -477,7 +478,7 @@ export const EconomicsCalculatorModal: React.FC<EconomicsCalculatorModalProps> =
                         color:
                           calcResult && calcResult.electricity.per_resident_share > 0
                             ? 'var(--primary)'
-                            : '#1E6B3A',
+                            : 'var(--md-sys-color-success)',
                       }}
                     >
                       {calcResult && calcResult.electricity.per_resident_share > 0
@@ -515,7 +516,7 @@ export const EconomicsCalculatorModal: React.FC<EconomicsCalculatorModalProps> =
                       color: 'var(--ink)',
                     }}
                   >
-                    ₹{calcResult?.summary.total_annual_cost.toLocaleString('en-IN') ?? '—'}
+                    ₹{calcResult?.summary.total_annual_cost.toLocaleString('en-IN') ?? '·'}
                   </span>
                 </div>
 

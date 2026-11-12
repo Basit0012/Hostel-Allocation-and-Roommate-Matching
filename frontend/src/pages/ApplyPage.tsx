@@ -1,14 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ArrowRight, BedDouble, CheckCircle2, ClipboardList, FileCheck2 } from 'lucide-react';
 import { applicationsApi, ApplicationChoicePayload } from '../api/applicationsApi';
 import { hostelsApi } from '../api/hostelsApi';
 import { HostelSummary } from '../types/hostel';
 import { RoomSummary } from '../types/room';
-import { HostelApplicationItem, CycleInfo } from '../types/application';
+import { CycleInfo, HostelApplicationItem } from '../types/application';
 import { Card } from '../components/common/Card';
 import { Badge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
 import { Spinner } from '../components/common/Spinner';
+
+interface ChoiceSlotConfig {
+  step: string;
+  title: string;
+  subtitle: string;
+  required: boolean;
+  hostelValue: number | '';
+  setHostelValue: React.Dispatch<React.SetStateAction<number | ''>>;
+  roomValue: number | '';
+  setRoomValue: React.Dispatch<React.SetStateAction<number | ''>>;
+}
 
 export const ApplyPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -24,7 +36,6 @@ export const ApplyPage: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // 3 Choices state
   const preselectedHostel = searchParams.get('hostel') ? Number(searchParams.get('hostel')) : undefined;
   const preselectedRoom = searchParams.get('room') ? Number(searchParams.get('room')) : undefined;
   const preselectedBed = searchParams.get('bed') || undefined;
@@ -51,7 +62,6 @@ export const ApplyPage: React.FC = () => {
         setHostels(hostelData.hostels);
         setRooms(roomData.rooms);
 
-        // Auto-link preselected room to its respective hostel complex
         if (preselectedRoom) {
           const target = roomData.rooms.find((r) => r.id === preselectedRoom);
           if (target) {
@@ -60,9 +70,14 @@ export const ApplyPage: React.FC = () => {
           }
         }
       })
-      .catch((err) => setErrorMsg(err.message || 'Failed to load application data.'))
+      .catch((err) => setErrorMsg(err.message || 'Failed to load application portal data.'))
       .finally(() => setIsLoading(false));
   }, [preselectedRoom]);
+
+  const getFilteredRooms = (hostelId: number | '') => {
+    if (!hostelId) return [];
+    return rooms.filter((r) => r.hostel_id === Number(hostelId));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +85,7 @@ export const ApplyPage: React.FC = () => {
     setSuccessMsg('');
 
     if (!choice1Hostel) {
-      setErrorMsg('Choice #1 Hostel selection is required.');
+      setErrorMsg('Choice #1 Hostel selection is mandatory.');
       return;
     }
 
@@ -100,205 +115,203 @@ export const ApplyPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const resp = await applicationsApi.submitApplication(payload);
-      setSuccessMsg(resp.message || 'Hostel application successfully submitted.');
-      // Refresh applications list
-      const appData = await applicationsApi.getApplications();
-      setApplications(appData.applications);
+      const res = await applicationsApi.submitApplication(payload);
+      setSuccessMsg(res.message || 'Residential preference slate filed successfully.');
+      const updated = await applicationsApi.getApplications();
+      setApplications(updated.applications);
     } catch (err: unknown) {
-      setErrorMsg(err instanceof Error ? err.message : 'Submission failed.');
+      setErrorMsg(err instanceof Error ? err.message : 'Failed to submit application.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const getFilteredRooms = (hostelId: number | '') => {
-    if (!hostelId) return [];
-    return rooms.filter((r) => r.hostel_id === Number(hostelId));
-  };
-
-  if (isLoading) return <Spinner label="Loading accommodation intake cycle..." />;
-
-  const hasSubmittedApp = applications.some(
-    (a) => a.cycle_name === activeCycle?.name && a.status !== 'CANCELLED' && a.status !== 'REJECTED'
+  const hasSubmittedApp = Boolean(
+    activeCycle &&
+      applications.some(
+        (a) =>
+          a.cycle_name === activeCycle.name &&
+          ['SUBMITTED', 'UNDER_REVIEW', 'ALLOCATED', 'WAITLISTED'].includes(a.status),
+      ),
   );
 
-  return (
-    <div className="container" style={{ maxWidth: '820px' }}>
-      {/* Title */}
-      <div style={{ marginBottom: '2rem' }}>
-        <h1
-          style={{
-            fontFamily: 'var(--font-serif)',
-            fontSize: '2rem',
-            fontWeight: 600,
-            color: 'var(--ink)',
-            margin: '0 0 0.5rem',
-            letterSpacing: '-0.01em',
-          }}
-        >
-          Hostel Room Application
-        </h1>
-        <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9375rem' }}>
-          Select up to 3 prioritized residential accommodation preferences for {activeCycle?.name || 'the 2026–27 academic session'}.
-        </p>
-      </div>
+  const selectedRoomPreview = preselectedRoom ? rooms.find((r) => r.id === preselectedRoom) : undefined;
 
-      {/* Cycle Banner */}
-      {activeCycle ? (
+  const choiceSlots: ChoiceSlotConfig[] = [
+    {
+      step: '01',
+      title: 'Primary Choice (Required)',
+      subtitle: 'Your highest priority hostel tower & preferred room for merit allocation.',
+      required: true,
+      hostelValue: choice1Hostel,
+      setHostelValue: setChoice1Hostel,
+      roomValue: choice1Room,
+      setRoomValue: setChoice1Room,
+    },
+    {
+      step: '02',
+      title: 'Secondary Fallback',
+      subtitle: 'Considered automatically if Choice #1 reaches full bed saturation.',
+      required: false,
+      hostelValue: choice2Hostel,
+      setHostelValue: setChoice2Hostel,
+      roomValue: choice2Room,
+      setRoomValue: setChoice2Room,
+    },
+    {
+      step: '03',
+      title: 'Third Fallback',
+      subtitle: 'Recommended buffer wing so you retain seat priority in the active round.',
+      required: false,
+      hostelValue: choice3Hostel,
+      setHostelValue: setChoice3Hostel,
+      roomValue: choice3Room,
+      setRoomValue: setChoice3Room,
+    },
+  ];
+
+  return (
+    <div className="container">
+      {/* Tonal Header Banner */}
+      <section className="m3-tonal-banner">
         <div
           style={{
-            padding: '1rem 1.25rem',
-            backgroundColor: 'var(--surface)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border)',
-            borderLeft: '3px solid var(--brand)',
-            marginBottom: '2rem',
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center',
+            alignItems: 'flex-end',
             flexWrap: 'wrap',
-            gap: '0.75rem',
+            gap: '1rem',
           }}
         >
           <div>
-            <strong style={{ color: 'var(--ink)' }}>Active Intake Cycle: {activeCycle.name}</strong>
-            <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-              Academic Year <span className="tabular-nums">{activeCycle.academic_year}</span> • Semester <span className="tabular-nums">{activeCycle.semester}</span>
-            </div>
+            <span className="m3-eyebrow-pill" style={{ marginBottom: '0.75rem' }}>
+              <ClipboardList size={13} />
+              Residential Preference Slate
+            </span>
+            <h1 className="m3-headline-medium" style={{ margin: '0.25rem 0 0.4rem', color: 'var(--on-surface)' }}>
+              Official Hostel Application
+            </h1>
+            <p className="m3-body-medium" style={{ margin: 0, color: 'var(--on-surface-variant)', maxWidth: '62ch' }}>
+              Submit up to three ordered hostel and room preferences for automated academic-year allotment processing.
+            </p>
           </div>
-          <Badge variant="success" size="sm">
-            Intake Open
-          </Badge>
+
+          {activeCycle && (
+            <div
+              style={{
+                padding: '0.75rem 1.15rem',
+                borderRadius: 'var(--md-sys-shape-corner-large)',
+                backgroundColor: 'var(--surface)',
+                border: '1px solid var(--outline-variant)',
+              }}
+            >
+              <div className="m3-label-small" style={{ color: 'var(--on-surface-variant)', textTransform: 'uppercase' }}>
+                Active Intake Cycle
+              </div>
+              <div className="m3-title-small" style={{ color: 'var(--primary)', fontWeight: 700 }}>
+                {activeCycle.name} ({activeCycle.academic_year})
+              </div>
+            </div>
+          )}
         </div>
-      ) : (
+      </section>
+
+      {isLoading ? (
+        <Spinner label="Loading intake cycle and available rooms..." />
+      ) : !activeCycle ? (
         <div
           style={{
             padding: '1.25rem 1.5rem',
-            backgroundColor: 'var(--surface)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border)',
-            borderLeft: '3px solid #8A5A00',
-            marginBottom: '2rem',
-            fontSize: '0.875rem',
-            color: 'var(--text)',
+            backgroundColor: 'var(--md-sys-color-warning-container)',
+            borderRadius: 'var(--md-sys-shape-corner-large)',
+            border: '1px solid var(--outline-variant)',
+            color: 'var(--md-sys-color-on-warning-container)',
+            fontSize: '0.9375rem',
+            fontWeight: 500,
           }}
         >
           No active accommodation intake cycle is currently accepting student submissions.
         </div>
-      )}
+      ) : hasSubmittedApp ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <Card variant="tonal" style={{ padding: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontWeight: 700, marginBottom: '0.3rem' }}>
+                  <FileCheck2 size={18} />
+                  Application Already On File
+                </div>
+                <p className="m3-body-medium" style={{ margin: 0, color: 'var(--on-surface-variant)', maxWidth: '60ch' }}>
+                  You have an active residential application filed for {activeCycle.name}. University policy permits one active slate per academic intake cycle.
+                </p>
+              </div>
+              <Button variant="primary" size="md" onClick={() => navigate('/dashboard')}>
+                Track Status on Dashboard
+                <ArrowRight size={16} />
+              </Button>
+            </div>
+          </Card>
 
-      {/* Existing Application Notice */}
-      {hasSubmittedApp ? (
-        <div>
-          <div
-            style={{
-              padding: '1.25rem 1.5rem',
-              backgroundColor: 'var(--surface)',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border)',
-              borderLeft: '3px solid var(--primary)',
-              marginBottom: '2rem',
-            }}
-          >
-            <h3
-              style={{
-                margin: '0 0 0.5rem',
-                fontFamily: 'var(--font-serif)',
-                fontSize: '1.125rem',
-                fontWeight: 600,
-                color: 'var(--ink)',
-              }}
-            >
-              Application Already On File
-            </h3>
-            <p style={{ margin: '0 0 1.25rem', fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.5 }}>
-              You have an active residential application submitted for this intake. University policy permits one active submission per academic intake cycle.
-            </p>
-            <Button variant="secondary" size="sm" onClick={() => navigate('/dashboard')}>
-              View Status on Dashboard &rarr;
-            </Button>
-          </div>
+          <h2 className="m3-title-large" style={{ margin: 0, color: 'var(--on-surface)' }}>
+            Submitted Application Record
+          </h2>
 
-          <h3
-            style={{
-              fontFamily: 'var(--font-serif)',
-              fontSize: '1.25rem',
-              fontWeight: 600,
-              color: 'var(--ink)',
-              marginBottom: '1rem',
-            }}
-          >
-            Submitted Application Details
-          </h3>
           {applications.map((app) => (
-            <Card key={app.id} style={{ marginBottom: '1rem' }}>
+            <Card key={app.id} variant="outlined" style={{ padding: '1.35rem' }}>
               <div
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '0.75rem',
+                  paddingBottom: '0.9rem',
                   marginBottom: '1rem',
-                  borderBottom: '1px solid var(--border)',
-                  paddingBottom: '0.75rem',
+                  borderBottom: '1px solid var(--outline-variant)',
                 }}
               >
                 <div>
-                  <h4
-                    style={{
-                      margin: 0,
-                      fontFamily: 'var(--font-serif)',
-                      fontSize: '1.0625rem',
-                      fontWeight: 600,
-                      color: 'var(--ink)',
-                    }}
-                  >
-                    Application #{app.id} — {app.cycle_name}
-                  </h4>
-                  <span
-                    className="tabular-nums"
-                    style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}
-                  >
+                  <h3 className="m3-title-large" style={{ margin: '0 0 0.2rem', color: 'var(--on-surface)' }}>
+                    Application #{app.id} · {app.cycle_name}
+                  </h3>
+                  <span className="m3-body-small tabular-nums" style={{ color: 'var(--on-surface-variant)' }}>
                     Filed {app.submitted_at}
                   </span>
                 </div>
                 <Badge
-                  variant={
-                    app.status === 'ALLOCATED'
-                      ? 'success'
-                      : app.status === 'SUBMITTED'
-                      ? 'neutral'
-                      : 'warning'
-                  }
+                  variant={app.status === 'ALLOCATED' ? 'success' : app.status === 'SUBMITTED' ? 'info' : 'warning'}
                   size="md"
                 >
                   {app.status_display}
                 </Badge>
               </div>
 
-              <div style={{ display: 'grid', gap: '0.5rem' }}>
+              <div style={{ display: 'grid', gap: '0.6rem' }}>
                 {app.choices.map((c) => (
                   <div
                     key={c.id}
                     style={{
-                      padding: '0.625rem 0.875rem',
-                      backgroundColor: 'var(--bg)',
-                      border: '1px solid var(--border)',
-                      borderRadius: 'var(--radius-sm)',
-                      fontSize: '0.875rem',
+                      padding: '0.8rem 1rem',
+                      backgroundColor: 'var(--surface-container-low)',
+                      border: '1px solid var(--outline-variant)',
+                      borderRadius: 'var(--md-sys-shape-corner-medium)',
                       display: 'flex',
                       justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '0.5rem',
                     }}
                   >
-                    <span>
-                      Priority <strong className="tabular-nums">#{c.priority}</strong>:{' '}
-                      <strong style={{ color: 'var(--ink)' }}>{c.hostel_name} ({c.hostel_code})</strong>
-                    </span>
-                    {c.room && (
-                      <span style={{ color: 'var(--ink)', fontWeight: 600 }}>
-                        Room <span className="tabular-nums">{c.room.room_number}</span> (
-                        <span className="tabular-nums">{c.room.capacity}</span>-Seater)
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <span className="m3-badge-step">0{c.priority}</span>
+                      <span className="m3-title-small" style={{ color: 'var(--on-surface)', fontWeight: 700 }}>
+                        {c.hostel_name} ({c.hostel_code})
                       </span>
+                    </div>
+                    {c.room && (
+                      <Badge variant="neutral" size="sm">
+                        Room {c.room.room_number} ({c.room.capacity}-Seater)
+                      </Badge>
                     )}
                   </div>
                 ))}
@@ -307,426 +320,167 @@ export const ApplyPage: React.FC = () => {
           ))}
         </div>
       ) : (
-        /* Submission Form */
-        <Card>
-          <form onSubmit={handleSubmit}>
-            {successMsg && (
-              <div
-                style={{
-                  padding: '0.75rem 1rem',
-                  backgroundColor: 'var(--surface)',
-                  color: '#1E6B3A',
-                  border: '1px solid #1E6B3A',
-                  borderRadius: 'var(--radius-sm)',
-                  marginBottom: '1.5rem',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                }}
-              >
-                {successMsg}
-              </div>
-            )}
-            {errorMsg && (
-              <div
-                style={{
-                  padding: '0.75rem 1rem',
-                  backgroundColor: 'var(--surface)',
-                  color: 'var(--status-danger)',
-                  border: '1px solid var(--status-danger)',
-                  borderRadius: 'var(--radius-sm)',
-                  marginBottom: '1.5rem',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                }}
-              >
-                {errorMsg}
-              </div>
-            )}
-
-            {/* Selected from Architectural Blueprint Banner */}
-            {(preselectedRoom || preselectedBed) && (
-              <div
-                style={{
-                  padding: '0.85rem 1rem',
-                  backgroundColor: '#FFF7ED',
-                  border: '1px solid #FFEDD5',
-                  borderRadius: 'var(--radius-sm)',
-                  marginBottom: '1.25rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '0.75rem',
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--primary)' }}>
-                    Architectural Blueprint Pre-selection Active
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    Choice #1 has been automatically locked to your selected room unit
-                    {preselectedBed ? ` and Bed Bay ${preselectedBed}` : ''}.
-                  </div>
-                </div>
-                <Badge variant="primary" size="sm">
-                  Blueprint Selected
-                </Badge>
-              </div>
-            )}
-
-            {/* CHOICE #1 */}
+        <div style={{ maxWidth: '820px', margin: '0 auto' }}>
+          {/* Preselected Blueprint / Catalog Callout */}
+          {(selectedRoomPreview || preselectedRoom) && (
             <div
               style={{
-                padding: '1.25rem',
-                border: '1px solid var(--border-strong)',
-                borderRadius: 'var(--radius-md)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.95rem 1.2rem',
                 marginBottom: '1.25rem',
-                backgroundColor: 'var(--surface)',
+                borderRadius: 'var(--md-sys-shape-corner-large)',
+                backgroundColor: 'var(--primary-container)',
+                color: 'var(--on-primary-container)',
+                border: '1px solid var(--outline-variant)',
               }}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '0.875rem',
-                }}
-              >
-                <strong
-                  style={{
-                    fontFamily: 'var(--font-serif)',
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                    color: 'var(--ink)',
-                  }}
-                >
-                  Choice #1 (First Preference — Mandatory)
-                </strong>
-                <Badge variant="primary" size="sm">Priority 1</Badge>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '0.6875rem',
-                      fontWeight: 600,
-                      color: 'var(--text-muted)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      marginBottom: '0.35rem',
-                    }}
-                  >
-                    Hostel Complex *
-                  </label>
-                  <select
-                    value={choice1Hostel}
-                    onChange={(e) => {
-                      setChoice1Hostel(e.target.value ? Number(e.target.value) : '');
-                      setChoice1Room('');
-                    }}
-                    required
-                    style={{
-                      width: '100%',
-                      height: '38px',
-                      padding: '0 0.75rem',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--border-strong)',
-                      backgroundColor: 'var(--surface)',
-                      color: 'var(--ink)',
-                      fontSize: '0.875rem',
-                      boxSizing: 'border-box',
-                    }}
-                  >
-                    <option value="">-- Select Hostel Complex --</option>
-                    {hostels.map((h) => (
-                      <option key={h.id} value={h.id}>
-                        {h.name} ({h.code}) — {h.gender_policy_display}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '0.6875rem',
-                      fontWeight: 600,
-                      color: 'var(--text-muted)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      marginBottom: '0.35rem',
-                    }}
-                  >
-                    Specific Room Preference (Optional)
-                  </label>
-                  <select
-                    value={choice1Room}
-                    onChange={(e) => setChoice1Room(e.target.value ? Number(e.target.value) : '')}
-                    disabled={!choice1Hostel}
-                    style={{
-                      width: '100%',
-                      height: '38px',
-                      padding: '0 0.75rem',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--border-strong)',
-                      backgroundColor: 'var(--surface)',
-                      color: 'var(--ink)',
-                      fontSize: '0.875rem',
-                      boxSizing: 'border-box',
-                    }}
-                  >
-                    <option value="">Any Available Room in Selected Hostel</option>
-                    {getFilteredRooms(choice1Hostel).map((r) => (
-                      <option key={r.id} value={r.id}>
-                        Room {r.room_number} ({r.capacity}-Seater, {r.is_air_conditioned ? 'AC' : 'Cooler'}, ₹{r.standard_fee?.toLocaleString('en-IN')})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <BedDouble size={20} />
+              <div className="m3-body-medium" style={{ fontWeight: 600 }}>
+                Pre-selected from Blueprint:{' '}
+                {selectedRoomPreview
+                  ? `${selectedRoomPreview.hostel_code} · Room ${selectedRoomPreview.room_number} (${selectedRoomPreview.capacity}-Seater)`
+                  : `Room #${preselectedRoom}`}
+                {preselectedBed ? ` · Bed ${preselectedBed}` : ''} locked as Choice #1.
               </div>
             </div>
+          )}
 
-            {/* CHOICE #2 */}
-            <div
-              style={{
-                padding: '1.25rem',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--radius-md)',
-                marginBottom: '1.25rem',
-                backgroundColor: 'var(--surface)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '0.875rem',
-                }}
-              >
-                <strong
+          <Card variant="elevated" style={{ padding: '1.6rem' }}>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {successMsg && (
+                <div
                   style={{
-                    fontFamily: 'var(--font-serif)',
-                    fontSize: '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.85rem 1rem',
+                    backgroundColor: 'var(--md-sys-color-success-container)',
+                    color: 'var(--md-sys-color-on-success-container)',
+                    border: '1px solid var(--outline-variant)',
+                    borderRadius: 'var(--md-sys-shape-corner-medium)',
+                    fontSize: '0.875rem',
                     fontWeight: 600,
-                    color: 'var(--ink)',
                   }}
                 >
-                  Choice #2 (Second Preference — Optional)
-                </strong>
-                <Badge variant="neutral" size="sm">Priority 2</Badge>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '0.6875rem',
-                      fontWeight: 600,
-                      color: 'var(--text-muted)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      marginBottom: '0.35rem',
-                    }}
-                  >
-                    Hostel Complex
-                  </label>
-                  <select
-                    value={choice2Hostel}
-                    onChange={(e) => {
-                      setChoice2Hostel(e.target.value ? Number(e.target.value) : '');
-                      setChoice2Room('');
-                    }}
-                    style={{
-                      width: '100%',
-                      height: '38px',
-                      padding: '0 0.75rem',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--border-strong)',
-                      backgroundColor: 'var(--surface)',
-                      color: 'var(--ink)',
-                      fontSize: '0.875rem',
-                      boxSizing: 'border-box',
-                    }}
-                  >
-                    <option value="">-- No Second Preference --</option>
-                    {hostels.map((h) => (
-                      <option key={h.id} value={h.id}>
-                        {h.name} ({h.code}) — {h.gender_policy_display}
-                      </option>
-                    ))}
-                  </select>
+                  <CheckCircle2 size={17} />
+                  {successMsg}
                 </div>
+              )}
 
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '0.6875rem',
-                      fontWeight: 600,
-                      color: 'var(--text-muted)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      marginBottom: '0.35rem',
-                    }}
-                  >
-                    Specific Room Preference
-                  </label>
-                  <select
-                    value={choice2Room}
-                    onChange={(e) => setChoice2Room(e.target.value ? Number(e.target.value) : '')}
-                    disabled={!choice2Hostel}
-                    style={{
-                      width: '100%',
-                      height: '38px',
-                      padding: '0 0.75rem',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--border-strong)',
-                      backgroundColor: 'var(--surface)',
-                      color: 'var(--ink)',
-                      fontSize: '0.875rem',
-                      boxSizing: 'border-box',
-                    }}
-                  >
-                    <option value="">Any Available Room</option>
-                    {getFilteredRooms(choice2Hostel).map((r) => (
-                      <option key={r.id} value={r.id}>
-                        Room {r.room_number} ({r.capacity}-Seater, {r.is_air_conditioned ? 'AC' : 'Cooler'})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* CHOICE #3 */}
-            <div
-              style={{
-                padding: '1.25rem',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--radius-md)',
-                marginBottom: '1.75rem',
-                backgroundColor: 'var(--surface)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '0.875rem',
-                }}
-              >
-                <strong
+              {errorMsg && (
+                <div
                   style={{
-                    fontFamily: 'var(--font-serif)',
-                    fontSize: '1rem',
+                    padding: '0.85rem 1rem',
+                    backgroundColor: 'var(--error-container)',
+                    color: 'var(--on-error-container)',
+                    border: '1px solid var(--outline-variant)',
+                    borderRadius: 'var(--md-sys-shape-corner-medium)',
+                    fontSize: '0.875rem',
                     fontWeight: 600,
-                    color: 'var(--ink)',
                   }}
                 >
-                  Choice #3 (Third Preference — Optional)
-                </strong>
-                <Badge variant="neutral" size="sm">Priority 3</Badge>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '0.6875rem',
-                      fontWeight: 600,
-                      color: 'var(--text-muted)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      marginBottom: '0.35rem',
-                    }}
-                  >
-                    Hostel Complex
-                  </label>
-                  <select
-                    value={choice3Hostel}
-                    onChange={(e) => {
-                      setChoice3Hostel(e.target.value ? Number(e.target.value) : '');
-                      setChoice3Room('');
-                    }}
-                    style={{
-                      width: '100%',
-                      height: '38px',
-                      padding: '0 0.75rem',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--border-strong)',
-                      backgroundColor: 'var(--surface)',
-                      color: 'var(--ink)',
-                      fontSize: '0.875rem',
-                      boxSizing: 'border-box',
-                    }}
-                  >
-                    <option value="">-- No Third Preference --</option>
-                    {hostels.map((h) => (
-                      <option key={h.id} value={h.id}>
-                        {h.name} ({h.code}) — {h.gender_policy_display}
-                      </option>
-                    ))}
-                  </select>
+                  {errorMsg}
                 </div>
+              )}
 
-                <div>
-                  <label
+              {choiceSlots.map((slot) => (
+                <div
+                  key={slot.step}
+                  style={{
+                    padding: '1.25rem',
+                    borderRadius: 'var(--md-sys-shape-corner-large)',
+                    backgroundColor: 'var(--surface-container-low)',
+                    border: '1px solid var(--outline-variant)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                    <span className="m3-badge-step">{slot.step}</span>
+                    <div>
+                      <h2 className="m3-title-medium" style={{ margin: 0, color: 'var(--on-surface)', fontWeight: 700 }}>
+                        {slot.title}
+                      </h2>
+                      <p className="m3-body-small" style={{ margin: '0.15rem 0 0', color: 'var(--on-surface-variant)' }}>
+                        {slot.subtitle}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div
                     style={{
-                      display: 'block',
-                      fontSize: '0.6875rem',
-                      fontWeight: 600,
-                      color: 'var(--text-muted)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      marginBottom: '0.35rem',
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
+                      gap: '1rem',
                     }}
                   >
-                    Specific Room Preference
-                  </label>
-                  <select
-                    value={choice3Room}
-                    onChange={(e) => setChoice3Room(e.target.value ? Number(e.target.value) : '')}
-                    disabled={!choice3Hostel}
-                    style={{
-                      width: '100%',
-                      height: '38px',
-                      padding: '0 0.75rem',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--border-strong)',
-                      backgroundColor: 'var(--surface)',
-                      color: 'var(--ink)',
-                      fontSize: '0.875rem',
-                      boxSizing: 'border-box',
-                    }}
-                  >
-                    <option value="">Any Available Room</option>
-                    {getFilteredRooms(choice3Hostel).map((r) => (
-                      <option key={r.id} value={r.id}>
-                        Room {r.room_number} ({r.capacity}-Seater, {r.is_air_conditioned ? 'AC' : 'Cooler'})
-                      </option>
-                    ))}
-                  </select>
+                    <div>
+                      <label
+                        className="m3-label-small"
+                        style={{
+                          display: 'block',
+                          color: 'var(--on-surface-variant)',
+                          textTransform: 'uppercase',
+                          marginBottom: '0.35rem',
+                        }}
+                      >
+                        Hostel Complex {slot.required ? '*' : ''}
+                      </label>
+                      <select
+                        className="m3-field-control"
+                        required={slot.required}
+                        value={slot.hostelValue}
+                        onChange={(e) => {
+                          slot.setHostelValue(e.target.value ? Number(e.target.value) : '');
+                          slot.setRoomValue('');
+                        }}
+                      >
+                        <option value="">{slot.required ? 'Select Primary Hostel...' : 'Skip Optional Choice...'}</option>
+                        {hostels.map((h) => (
+                          <option key={h.id} value={h.id}>
+                            {h.code} · {h.name} ({h.vacant_beds} vacant)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label
+                        className="m3-label-small"
+                        style={{
+                          display: 'block',
+                          color: 'var(--on-surface-variant)',
+                          textTransform: 'uppercase',
+                          marginBottom: '0.35rem',
+                        }}
+                      >
+                        Specific Room Preference
+                      </label>
+                      <select
+                        className="m3-field-control"
+                        value={slot.roomValue}
+                        onChange={(e) => slot.setRoomValue(e.target.value ? Number(e.target.value) : '')}
+                        disabled={!slot.hostelValue}
+                      >
+                        <option value="">Any Available Room</option>
+                        {getFilteredRooms(slot.hostelValue).map((r) => (
+                          <option key={r.id} value={r.id}>
+                            Room {r.room_number} ({r.capacity}-Seater, {r.is_air_conditioned ? 'AC' : 'Cooler'})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              ))}
 
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              isLoading={isSubmitting}
-              style={{ width: '100%' }}
-            >
-              Submit Official Application
-            </Button>
-          </form>
-        </Card>
+              <Button type="submit" variant="primary" size="lg" isLoading={isSubmitting} style={{ width: '100%' }}>
+                Submit Official Application
+                <ArrowRight size={17} />
+              </Button>
+            </form>
+          </Card>
+        </div>
       )}
     </div>
   );

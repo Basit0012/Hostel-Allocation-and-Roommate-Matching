@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  BedDouble,
+  CheckCircle,
+  Compass,
+  ExternalLink,
+  ShieldCheck,
+  Users,
+  Wrench,
+  XCircle,
+} from 'lucide-react';
 import { livingApi } from '../../api/livingApi';
 import { hostelsApi } from '../../api/hostelsApi';
 import { GatePassItem, RMSTicketItem } from '../../types/living';
@@ -8,23 +18,14 @@ import { Card } from '../common/Card';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
 import { Spinner } from '../common/Spinner';
-import {
-  ShieldCheck,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Wrench,
-  Building,
-  Compass,
-  AlertTriangle,
-  QrCode,
-  Users,
-} from 'lucide-react';
+import { InlineTableControl } from '../watermelon/InlineTableControl';
 
 interface WardenCommandCenterProps {
   userEmail: string;
   role: string;
 }
+
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
 
 export const WardenCommandCenter: React.FC<WardenCommandCenterProps> = ({ userEmail, role }) => {
   const [gatePasses, setGatePasses] = useState<GatePassItem[]>([]);
@@ -82,157 +83,164 @@ export const WardenCommandCenter: React.FC<WardenCommandCenterProps> = ({ userEm
 
   if (isLoading) return <Spinner label="Loading warden operations command desk..." />;
 
-  // Filter pending gate passes
   const pendingPasses = gatePasses.filter(
     (p) => p.status === 'SUBMITTED' || p.status === 'PENDING_WARDEN'
   );
   const activeOutsidePasses = gatePasses.filter((p) => p.status === 'ACTIVE_OUTSIDE');
-
-  // Filter open / in-progress RMS tickets
   const activeTickets = rmsTickets.filter(
     (t) => t.status !== 'RESOLVED' && t.status !== 'CLOSED'
   );
 
   const totalBeds = hostels.reduce((acc, h) => acc + h.total_beds, 0);
   const vacantBeds = hostels.reduce((acc, h) => acc + h.vacant_beds, 0);
+  const occupiedPct = totalBeds > 0 ? Math.round(((totalBeds - vacantBeds) / totalBeds) * 100) : 0;
 
   return (
-    <div>
-      {/* Header */}
-      <div style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-          <span
-            style={{
-              fontFamily: 'monospace',
-              fontSize: '0.6875rem',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              color: 'var(--primary)',
-            }}
-          >
-            Residential Operations
-          </span>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>•</span>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Lovely Professional University
-          </span>
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h1
-              style={{
-                fontFamily: 'var(--font-serif)',
-                fontSize: '2rem',
-                fontWeight: 600,
-                color: 'var(--ink)',
-                margin: '0 0 0.5rem',
-                letterSpacing: '-0.01em',
-              }}
-            >
-              Warden Command Center
-            </h1>
-            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9375rem' }}>
-              Logged in as <strong style={{ color: 'var(--ink)' }}>{userEmail}</strong> ({role}) • Live Operations &amp; Outing Approvals
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <Link to="/admin/" style={{ textDecoration: 'none' }}>
-              <Button variant="secondary" size="sm">
-                Open Django Admin Console &rarr;
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Overview Census Metric Cards */}
-      <div
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+      {/* M3 Operations Hero Banner */}
+      <section
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-          gap: '1rem',
-          marginBottom: '2rem',
+          borderRadius: 'var(--md-sys-shape-corner-extra-large)',
+          padding: '1.75rem',
+          backgroundColor: 'var(--primary-container)',
+          color: 'var(--on-primary-container)',
+          border: '1px solid var(--outline-variant)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1.25rem',
         }}
       >
-        <Card>
-          <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
-            Residential Complex Capacity
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <Badge variant="primary" size="sm">Residential Operations</Badge>
+            <Badge variant="info" size="sm">{role}</Badge>
           </div>
-          <div style={{ fontSize: '1.75rem', fontFamily: 'var(--font-serif)', fontWeight: 700, color: 'var(--ink)', margin: '0.2rem 0' }}>
+          <h1 className="m3-display-small" style={{ margin: '0 0 0.35rem', color: 'var(--on-primary-container)' }}>
+            Warden Command Center
+          </h1>
+          <p className="m3-body-medium" style={{ margin: 0, color: 'var(--on-primary-container)', opacity: 0.9 }}>
+            Signed in as <strong>{userEmail}</strong> • Live campus census, gate pass authorizations &amp; RMS SLA dispatch
+          </p>
+        </div>
+
+        <a
+          href={`${API_BASE}/admin/`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ textDecoration: 'none' }}
+        >
+          <Button variant="primary" size="md">
+            Open Django Admin Console
+            <ExternalLink size={15} />
+          </Button>
+        </a>
+      </section>
+
+      {/* Overview Census Metric Bento Cards */}
+      <section className="m3-grid">
+        <Card className="m3-span-3" variant="outlined">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <span className="m3-label-medium" style={{ color: 'var(--on-surface-variant)' }}>Campus Bed Capacity</span>
+            <BedDouble size={18} color="var(--primary)" />
+          </div>
+          <div className="m3-headline-medium tabular-nums" style={{ color: 'var(--on-surface)' }}>
             {totalBeds.toLocaleString('en-IN')} Beds
           </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+          <div className="m3-body-small" style={{ marginTop: '0.25rem' }}>
             Across {hostels.length} Complex Towers
           </div>
         </Card>
 
-        <Card>
-          <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
-            Vacant Bed Slots
+        <Card className="m3-span-3" variant="outlined">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <span className="m3-label-medium" style={{ color: 'var(--on-surface-variant)' }}>Vacant Slots</span>
+            <CheckCircle size={18} color="var(--md-sys-color-success)" />
           </div>
-          <div style={{ fontSize: '1.75rem', fontFamily: 'var(--font-serif)', fontWeight: 700, color: '#1E6B3A', margin: '0.2rem 0' }}>
-            {vacantBeds.toLocaleString('en-IN')} Vacant
+          <div className="m3-headline-medium tabular-nums" style={{ color: 'var(--md-sys-color-success)' }}>
+            {vacantBeds.toLocaleString('en-IN')} Free
           </div>
-          <div style={{ fontSize: '0.75rem', color: '#1E6B3A', fontWeight: 500 }}>
-            Ready for allocation assignment
+          <div style={{ marginTop: '0.5rem', height: '6px', borderRadius: 'var(--radius-full)', backgroundColor: 'var(--surface-container-highest)', overflow: 'hidden' }}>
+            <div style={{ width: `${occupiedPct}%`, height: '100%', backgroundColor: 'var(--primary)', borderRadius: 'var(--radius-full)' }} />
           </div>
         </Card>
 
-        <Card>
-          <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
-            Pending Outing Requests
+        <Card className="m3-span-3" variant="outlined">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <span className="m3-label-medium" style={{ color: 'var(--on-surface-variant)' }}>Pending Outing Passes</span>
+            <Users size={18} color="var(--primary)" />
           </div>
-          <div style={{ fontSize: '1.75rem', fontFamily: 'var(--font-serif)', fontWeight: 700, color: 'var(--primary)', margin: '0.2rem 0' }}>
+          <div className="m3-headline-medium tabular-nums" style={{ color: 'var(--primary)' }}>
             {pendingPasses.length} Pending
           </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+          <div className="m3-body-small" style={{ marginTop: '0.25rem' }}>
             {activeOutsidePasses.length} residents currently outside
           </div>
         </Card>
 
-        <Card>
-          <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
-            Active RMS Tickets
+        <Card className="m3-span-3" variant="outlined">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <span className="m3-label-medium" style={{ color: 'var(--on-surface-variant)' }}>Active RMS Tickets</span>
+            <Wrench size={18} color={activeTickets.length > 0 ? 'var(--md-sys-color-warning)' : 'var(--md-sys-color-success)'} />
           </div>
-          <div style={{ fontSize: '1.75rem', fontFamily: 'var(--font-serif)', fontWeight: 700, color: activeTickets.length > 0 ? '#B45309' : '#1E6B3A', margin: '0.2rem 0' }}>
+          <div
+            className="m3-headline-medium tabular-nums"
+            style={{ color: activeTickets.length > 0 ? 'var(--md-sys-color-warning)' : 'var(--md-sys-color-success)' }}
+          >
             {activeTickets.length} Open
           </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+          <div className="m3-body-small" style={{ marginTop: '0.25rem' }}>
             Under active maintenance SLA
           </div>
         </Card>
-      </div>
+      </section>
 
-      {/* Two Column Workflow: Gate Passes Approval & RMS Maintenance Desk */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(440px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+      {/* Two Column Workflow: Gate Passes & RMS Maintenance */}
+      <section className="m3-grid">
         {/* Outing Gate Pass Approvals Queue */}
-        <div
-          style={{
-            backgroundColor: '#FFFFFF',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-md)',
-            padding: '1.25rem',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+        <Card className="m3-span-6" variant="outlined" style={{ padding: '1.35rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '1rem',
+              paddingBottom: '0.75rem',
+              borderBottom: '1px solid var(--outline-variant)',
+              flexWrap: 'wrap',
+              gap: '0.5rem',
+            }}
+          >
             <div>
-              <span style={{ fontFamily: 'monospace', fontSize: '0.625rem', color: 'var(--primary)', fontWeight: 700, textTransform: 'uppercase' }}>
+              <span className="m3-label-small" style={{ color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
                 Turnstile Security Authorizations
               </span>
-              <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.125rem', margin: '0.1rem 0 0', color: 'var(--ink)' }}>
+              <h3 className="m3-title-large" style={{ margin: '0.15rem 0 0' }}>
                 Gate Pass Approvals Queue
               </h3>
             </div>
-            <Badge variant="warning">{pendingPasses.length} Requiring Action</Badge>
+            <Badge variant={pendingPasses.length > 0 ? 'warning' : 'success'}>
+              {pendingPasses.length} Requiring Action
+            </Badge>
           </div>
 
           {pendingPasses.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', backgroundColor: '#FAF9F6', border: '1px dashed var(--border)', borderRadius: '2px', fontSize: '0.8125rem' }}>
-              <ShieldCheck size={24} color="#1E6B3A" style={{ marginBottom: '0.5rem' }} />
-              <div>All student outing requests are reviewed and up-to-date.</div>
+            <div
+              style={{
+                padding: '2rem 1rem',
+                textAlign: 'center',
+                backgroundColor: 'var(--surface-container-low)',
+                border: '1px dashed var(--outline-variant)',
+                borderRadius: 'var(--md-sys-shape-corner-large)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '0.5rem',
+              }}
+            >
+              <ShieldCheck size={28} color="var(--md-sys-color-success)" />
+              <div className="m3-body-medium">All student outing requests are reviewed and up-to-date.</div>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -240,54 +248,62 @@ export const WardenCommandCenter: React.FC<WardenCommandCenterProps> = ({ userEm
                 <div
                   key={p.id}
                   style={{
-                    padding: '0.85rem 1rem',
-                    backgroundColor: '#FAF8F5',
-                    border: '1px solid var(--border)',
-                    borderRadius: '2px',
+                    padding: '0.95rem 1rem',
+                    backgroundColor: 'var(--surface-container-low)',
+                    border: '1px solid var(--outline-variant)',
+                    borderRadius: 'var(--md-sys-shape-corner-medium)',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.35rem' }}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <span style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '0.875rem' }}>
-                          {(p as any).student_name || 'Resident'}
-                        </span>
-                        <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                          #{(p as any).student_id || 'N/A'}
-                        </span>
-                        <Badge variant="neutral" size="sm">{p.pass_type_display}</Badge>
-                      </div>
-                      <div style={{ fontSize: '0.8125rem', color: 'var(--ink)', marginTop: '0.2rem' }}>
-                        Destination: <strong>{p.destination}</strong>
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        Reason: &ldquo;{p.reason}&rdquo;
-                      </div>
-                    </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.45rem', marginBottom: '0.35rem' }}>
+                    <strong className="m3-title-small" style={{ color: 'var(--on-surface)' }}>
+                      {(p as GatePassItem & { student_name?: string }).student_name || 'Resident'}
+                    </strong>
+                    <span className="m3-label-small tabular-nums" style={{ fontFamily: 'var(--font-mono)', color: 'var(--on-surface-variant)' }}>
+                      #{(p as GatePassItem & { student_id?: string }).student_id || 'N/A'}
+                    </span>
+                    <Badge variant="neutral" size="sm">{p.pass_type_display}</Badge>
                   </div>
 
-                  <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', borderTop: '1px dashed var(--border)', paddingTop: '0.35rem', marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>
-                      Schedule: {new Date(p.departure_date).toLocaleDateString()} — {new Date(p.expected_return_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  <div className="m3-body-medium" style={{ color: 'var(--on-surface)' }}>
+                    Destination: <strong>{p.destination}</strong>
+                  </div>
+                  <div className="m3-body-small" style={{ marginBottom: '0.65rem' }}>
+                    Reason: &ldquo;{p.reason}&rdquo;
+                  </div>
+
+                  <div
+                    style={{
+                      borderTop: '1px solid var(--outline-variant)',
+                      paddingTop: '0.6rem',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '0.5rem',
+                    }}
+                  >
+                    <span className="m3-body-small tabular-nums">
+                      {new Date(p.departure_date).toLocaleDateString()}  · {' '}
+                      {new Date(p.expected_return_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
 
-                    <div style={{ display: 'flex', gap: '0.4rem' }}>
+                    <div style={{ display: 'flex', gap: '0.45rem' }}>
                       <Button
                         size="sm"
                         variant="primary"
                         disabled={actionLoadingId === p.id}
                         onClick={() => handleApprovePass(p.id)}
                       >
-                        <CheckCircle size={12} style={{ marginRight: '0.2rem' }} />
+                        <CheckCircle size={13} />
                         Approve
                       </Button>
                       <Button
                         size="sm"
-                        variant="secondary"
+                        variant="danger"
                         disabled={actionLoadingId === p.id}
                         onClick={() => handleRejectPass(p.id)}
                       >
-                        <XCircle size={12} style={{ marginRight: '0.2rem' }} />
+                        <XCircle size={13} />
                         Reject
                       </Button>
                     </div>
@@ -296,23 +312,27 @@ export const WardenCommandCenter: React.FC<WardenCommandCenterProps> = ({ userEm
               ))}
             </div>
           )}
-        </div>
+        </Card>
 
         {/* RMS Maintenance Dispatch Queue */}
-        <div
-          style={{
-            backgroundColor: '#FFFFFF',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-md)',
-            padding: '1.25rem',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+        <Card className="m3-span-6" variant="outlined" style={{ padding: '1.35rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '1rem',
+              paddingBottom: '0.75rem',
+              borderBottom: '1px solid var(--outline-variant)',
+              flexWrap: 'wrap',
+              gap: '0.5rem',
+            }}
+          >
             <div>
-              <span style={{ fontFamily: 'monospace', fontSize: '0.625rem', color: 'var(--primary)', fontWeight: 700, textTransform: 'uppercase' }}>
+              <span className="m3-label-small" style={{ color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
                 Relationship Management System
               </span>
-              <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.125rem', margin: '0.1rem 0 0', color: 'var(--ink)' }}>
+              <h3 className="m3-title-large" style={{ margin: '0.15rem 0 0' }}>
                 Room Maintenance Dispatch
               </h3>
             </div>
@@ -322,9 +342,21 @@ export const WardenCommandCenter: React.FC<WardenCommandCenterProps> = ({ userEm
           </div>
 
           {activeTickets.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', backgroundColor: '#FAF9F6', border: '1px dashed var(--border)', borderRadius: '2px', fontSize: '0.8125rem' }}>
-              <CheckCircle size={24} color="#1E6B3A" style={{ marginBottom: '0.5rem' }} />
-              <div>Zero room maintenance tickets pending across your towers.</div>
+            <div
+              style={{
+                padding: '2rem 1rem',
+                textAlign: 'center',
+                backgroundColor: 'var(--surface-container-low)',
+                border: '1px dashed var(--outline-variant)',
+                borderRadius: 'var(--md-sys-shape-corner-large)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '0.5rem',
+              }}
+            >
+              <CheckCircle size={28} color="var(--md-sys-color-success)" />
+              <div className="m3-body-medium">Zero room maintenance tickets pending across your towers.</div>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -332,45 +364,54 @@ export const WardenCommandCenter: React.FC<WardenCommandCenterProps> = ({ userEm
                 <div
                   key={t.id}
                   style={{
-                    padding: '0.85rem 1rem',
-                    backgroundColor: '#FAF8F5',
-                    border: '1px solid var(--border)',
-                    borderRadius: '2px',
+                    padding: '0.95rem 1rem',
+                    backgroundColor: 'var(--surface-container-low)',
+                    border: '1px solid var(--outline-variant)',
+                    borderRadius: 'var(--md-sys-shape-corner-medium)',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.35rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.35rem' }}>
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: 700 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                        <span className="m3-label-small tabular-nums" style={{ fontFamily: 'var(--font-mono)', color: 'var(--primary)' }}>
                           #{t.ticket_number}
                         </span>
-                        <strong style={{ color: 'var(--ink)', fontSize: '0.875rem' }}>
+                        <strong className="m3-title-small" style={{ color: 'var(--on-surface)' }}>
                           {t.title}
                         </strong>
                       </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text)' }}>
+                      <div className="m3-body-small" style={{ color: 'var(--on-surface)' }}>
                         Room <strong>{t.room_number}</strong> • {t.hostel_name} ({t.category_display})
                       </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        &ldquo;{t.description}&rdquo;
-                      </div>
+                      <div className="m3-body-small">&ldquo;{t.description}&rdquo;</div>
                     </div>
 
-                    <Badge variant={t.priority === 'EMERGENCY' ? 'danger' : 'neutral'} size="sm">
+                    <Badge variant={t.priority === 'EMERGENCY' ? 'danger' : 'warning'} size="sm">
                       {t.priority_display}
                     </Badge>
                   </div>
 
-                  <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', borderTop: '1px dashed var(--border)', paddingTop: '0.35rem', marginTop: '0.35rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>
+                  <div
+                    style={{
+                      borderTop: '1px solid var(--outline-variant)',
+                      paddingTop: '0.6rem',
+                      marginTop: '0.35rem',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '0.5rem',
+                    }}
+                  >
+                    <span className="m3-body-small tabular-nums">
                       SLA: {new Date(t.sla_deadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
 
-                    <div style={{ display: 'flex', gap: '0.4rem' }}>
+                    <div style={{ display: 'flex', gap: '0.45rem' }}>
                       {t.status === 'OPEN' && (
                         <Button
                           size="sm"
-                          variant="secondary"
+                          variant="tonal"
                           disabled={actionLoadingId === t.id}
                           onClick={() => handleUpdateTicket(t.id, 'IN_PROGRESS')}
                         >
@@ -391,51 +432,63 @@ export const WardenCommandCenter: React.FC<WardenCommandCenterProps> = ({ userEm
               ))}
             </div>
           )}
-        </div>
-      </div>
+        </Card>
+      </section>
 
       {/* Assigned Residential Complexes Direct Blueprint Navigator */}
-      <div>
-        <div style={{ marginBottom: '1rem' }}>
-          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.375rem', fontWeight: 600, color: 'var(--ink)', margin: 0 }}>
-            Assigned Residential Towers (Floor Blueprint Navigator)
+      <section className="space-y-4">
+        <div>
+          <h2 className="m3-headline-small" style={{ margin: 0 }}>
+            Residential Towers · Floor Blueprint Navigator
           </h2>
-          <p style={{ margin: '0.2rem 0 0', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-            Select any building to launch its interactive 2D Architectural Blueprint Floor Plan and bed inventory.
+          <p className="m3-body-small" style={{ margin: '0.15rem 0 0' }}>
+            Inspect campus complex occupancy or open any block 2D CAD Floor Plan and live bed roster
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
-          {hostels.map((h) => (
-            <Card key={h.id} hoverable>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)' }}>
-                  {h.code}
-                </span>
-                <Badge variant={h.gender_policy === 'MALE' ? 'info' : 'warning'} size="sm">
-                  {h.gender_policy_display}
-                </Badge>
-              </div>
-
-              <h4 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.125rem', fontWeight: 600, color: 'var(--ink)', margin: '0 0 0.35rem' }}>
-                {h.name}
-              </h4>
-
-              <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
-                Capacity: <strong>{h.total_beds}</strong> beds • Vacant: <strong style={{ color: '#1E6B3A' }}>{h.vacant_beds}</strong>
-              </div>
-
-              <Link to={`/hostels/${h.id}`} style={{ textDecoration: 'none' }}>
-                <Button variant="secondary" size="sm" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
-                  <Compass size={13} color="var(--primary)" />
-                  Inspect 2D Architectural Blueprint &rarr;
-                </Button>
-              </Link>
-            </Card>
-          ))}
-        </div>
-      </div>
+        <InlineTableControl
+          allowEdit={false}
+          data={hostels.map((h) => ({
+            id: h.id,
+            code: h.code,
+            name: h.name,
+            policy: h.gender_policy_display,
+            occupancy: `${h.vacant_beds} / ${h.total_beds} vacant (${h.occupancy_pct}%)`,
+            blueprint: h.id,
+          }))}
+          columns={[
+            {
+              key: 'code',
+              label: 'Block',
+              editable: false,
+              render: (row) => <span className="font-mono font-semibold text-foreground">{row.code}</span>,
+            },
+            { key: 'name', label: 'Hostel Complex', editable: false },
+            { key: 'policy', label: 'Wing Policy', editable: false },
+            {
+              key: 'occupancy',
+              label: 'Vacancy',
+              editable: false,
+              render: (row) => <span className="font-mono text-xs tabular-nums">{row.occupancy}</span>,
+            },
+            {
+              key: 'blueprint',
+              label: 'Action',
+              align: 'right',
+              editable: false,
+              render: (row) => (
+                <Link
+                  to={`/hostels/${row.blueprint}`}
+                  className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-muted"
+                >
+                  <Compass size={12} />
+                  Open CAD Plan
+                </Link>
+              ),
+            },
+          ]}
+        />
+      </section>
     </div>
   );
 };
-

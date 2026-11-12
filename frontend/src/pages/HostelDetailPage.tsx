@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
+import { ArrowLeft, Building2, Calculator, Compass, Layers, LayoutGrid, Snowflake, Wind } from 'lucide-react';
 import { hostelsApi } from '../api/hostelsApi';
-import { HostelDetail, FloorRoomDetail } from '../types/hostel';
+import { FloorRoomDetail, HostelDetail } from '../types/hostel';
 import { Spinner } from '../components/common/Spinner';
 import { Badge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
 import { Card } from '../components/common/Card';
+import { RippleOverlay, useM3Ripple } from '../components/common/Ripple';
 import { BedIndicator } from '../components/hostel/BedIndicator';
 import { ArchitecturalFloorPlan } from '../components/hostel/ArchitecturalFloorPlan';
 import { RoomInspectionModal } from '../components/hostel/RoomInspectionModal';
 import { EconomicsCalculatorModal } from '../components/economics/EconomicsCalculatorModal';
-import { Compass, LayoutGrid, Calculator } from 'lucide-react';
 
 export const HostelDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -22,10 +23,13 @@ export const HostelDetailPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'BLUEPRINT' | 'GRID'>('BLUEPRINT');
   const [inspectedRoom, setInspectedRoom] = useState<FloorRoomDetail | null>(null);
   const [isCalcOpen, setIsCalcOpen] = useState(false);
+  const { ripples, triggerRipple } = useM3Ripple();
 
   useEffect(() => {
     if (!id) return;
     setIsLoading(true);
+    setSelectedBlockIdx(0);
+    setSelectedFloorIdx(0);
     hostelsApi
       .getHostelDetail(Number(id))
       .then((data) => {
@@ -36,196 +40,155 @@ export const HostelDetailPage: React.FC = () => {
       .finally(() => setIsLoading(false));
   }, [id]);
 
-  if (isLoading) return <Spinner label="Loading hostel details..." />;
+  if (isLoading) return <Spinner label="Loading tower blueprint and room matrix..." />;
   if (error || !hostel) {
     return (
-      <div className="container" style={{ padding: '3rem 0', textAlign: 'center' }}>
-        <h2 style={{ fontFamily: 'var(--font-serif)', color: 'var(--status-danger)' }}>Hostel Not Found</h2>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>{error}</p>
-        <Link to="/hostels">
-          <Button variant="secondary">Back to Hostels Directory</Button>
-        </Link>
+      <div className="container" style={{ padding: '2rem 0' }}>
+        <Card variant="outlined" style={{ padding: '3rem 1.5rem', textAlign: 'center' }}>
+          <h2 className="m3-headline-small" style={{ color: 'var(--status-danger)', margin: '0 0 0.5rem' }}>
+            Hostel Complex Not Found
+          </h2>
+          <p className="m3-body-medium" style={{ color: 'var(--on-surface-variant)', margin: '0 0 1.5rem' }}>
+            {error}
+          </p>
+          <Link to="/hostels" style={{ textDecoration: 'none' }}>
+            <Button variant="tonal">
+              <ArrowLeft size={16} /> Back to Hostels Directory
+            </Button>
+          </Link>
+        </Card>
       </div>
     );
   }
 
   const activeBlock = hostel.blocks[selectedBlockIdx] || hostel.blocks[0];
   const activeFloor = activeBlock?.floors[selectedFloorIdx] || activeBlock?.floors[0];
+  const occupancyPct = hostel.total_beds > 0 ? Math.round((hostel.occupied_beds / hostel.total_beds) * 100) : 0;
 
   return (
     <div className="container">
-      {/* Breadcrumb & Navigation */}
-      <div style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      {/* Breadcrumb Back Navigation */}
+      <div style={{ marginBottom: '1rem' }}>
         <Link
           to="/hostels"
+          className="m3-label-large"
           style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem',
             textDecoration: 'none',
             color: 'var(--primary)',
-            fontSize: '0.875rem',
-            fontWeight: 500,
+            padding: '0.35rem 0.75rem',
+            borderRadius: 'var(--radius-pill)',
+            backgroundColor: 'var(--surface-container-low)',
+            border: '1px solid var(--outline-variant)',
           }}
         >
-          &larr; Back to Hostels Directory
+          <ArrowLeft size={15} />
+          Back to Hostels Directory
         </Link>
       </div>
 
-      {/* Hero Header */}
-      <div
-        style={{
-          padding: '2rem',
-          backgroundColor: 'var(--surface)',
-          borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--border)',
-          borderTop: '3px solid var(--brand)',
-          marginBottom: '2rem',
-        }}
-      >
+      {/* Tower Tonal Hero Banner */}
+      <section className="m3-tonal-banner">
         <div
           style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'flex-start',
             flexWrap: 'wrap',
-            gap: '1rem',
+            gap: '1.25rem',
           }}
         >
-          <div>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem' }}>
-              <Badge variant="neutral">{hostel.gender_policy_display}</Badge>
-              <Badge variant="success">{hostel.status_display}</Badge>
+          <div style={{ flex: 1, minWidth: '260px' }}>
+            <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+              <span className="m3-eyebrow-pill">
+                <Building2 size={13} />
+                {hostel.code}
+              </span>
+              <Badge variant={hostel.gender_policy === 'FEMALE' ? 'warning' : 'info'} size="sm">
+                {hostel.gender_policy_display}
+              </Badge>
+              <Badge variant={hostel.status === 'ACTIVE' ? 'success' : 'warning'} size="sm">
+                {hostel.status_display}
+              </Badge>
             </div>
-            <h1
-              style={{
-                fontFamily: 'var(--font-serif)',
-                fontSize: '2.125rem',
-                fontWeight: 600,
-                color: 'var(--ink)',
-                margin: '0 0 0.5rem',
-                letterSpacing: '-0.01em',
-              }}
-            >
+
+            <h1 className="m3-headline-large" style={{ margin: '0 0 0.45rem', color: 'var(--on-surface)' }}>
               {hostel.name}
             </h1>
-            <div style={{ fontSize: '0.9375rem', color: 'var(--text-muted)' }}>
-              Complex Code: <strong style={{ color: 'var(--ink)' }}>{hostel.code}</strong> • Lovely Professional University
-            </div>
+            <p className="m3-body-large" style={{ margin: 0, color: 'var(--on-surface-variant)', maxWidth: '64ch' }}>
+              {hostel.description}
+            </p>
           </div>
 
-          {/* Quick Metrics & Fee Calculator Action */}
-          <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setIsCalcOpen(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-            >
-              <Calculator size={14} color="var(--primary)" />
-              Fee & Mess Calculator
-            </Button>
-
-            <div style={{ display: 'flex', gap: '2rem', textAlign: 'right' }}>
+          <div
+            style={{
+              minWidth: '250px',
+              backgroundColor: 'var(--surface)',
+              border: '1px solid var(--outline-variant)',
+              borderRadius: 'var(--md-sys-shape-corner-large)',
+              padding: '1rem 1.2rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.85rem',
+            }}
+          >
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
               <div>
-                <div
-                  style={{
-                    fontSize: '0.6875rem',
-                    fontWeight: 600,
-                    color: 'var(--text-muted)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                  }}
-                >
-                  Total Bed Capacity
+                <div className="m3-label-small" style={{ color: 'var(--on-surface-variant)', textTransform: 'uppercase' }}>
+                  Total
                 </div>
-                <div
-                  className="tabular-nums"
-                  style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--ink)' }}
-                >
+                <div className="m3-title-large tabular-nums" style={{ fontWeight: 700, color: 'var(--on-surface)' }}>
                   {hostel.total_beds}
                 </div>
               </div>
-              <div>
-                <div
-                  style={{
-                    fontSize: '0.6875rem',
-                    fontWeight: 600,
-                    color: 'var(--text-muted)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                  }}
-                >
-                  Available Beds
+              <div style={{ borderLeft: '1px solid var(--outline-variant)', borderRight: '1px solid var(--outline-variant)' }}>
+                <div className="m3-label-small" style={{ color: 'var(--on-surface-variant)', textTransform: 'uppercase' }}>
+                  Vacant
                 </div>
-                <div
-                  className="tabular-nums"
-                  style={{ fontSize: '1.5rem', fontWeight: 600, color: '#1E6B3A' }}
-                >
+                <div className="m3-title-large tabular-nums" style={{ fontWeight: 700, color: hostel.vacant_beds > 0 ? 'var(--status-success)' : 'var(--status-danger)' }}>
                   {hostel.vacant_beds}
                 </div>
               </div>
+              <div>
+                <div className="m3-label-small" style={{ color: 'var(--on-surface-variant)', textTransform: 'uppercase' }}>
+                  Filled
+                </div>
+                <div className="m3-title-large tabular-nums" style={{ fontWeight: 700, color: 'var(--on-surface)' }}>
+                  {hostel.occupied_beds}
+                </div>
+              </div>
             </div>
+
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.28rem' }}>
+                <span style={{ color: 'var(--on-surface-variant)' }}>Tower Occupancy</span>
+                <span className="tabular-nums" style={{ fontWeight: 700, color: 'var(--on-surface)' }}>{occupancyPct}%</span>
+              </div>
+              <div className="m3-progress-track">
+                <div
+                  className="m3-progress-fill"
+                  style={{
+                    width: `${Math.max(occupancyPct > 0 ? 4 : 0, occupancyPct)}%`,
+                    backgroundColor: occupancyPct > 90 ? 'var(--md-sys-color-warning)' : 'var(--primary)',
+                  }}
+                />
+              </div>
+            </div>
+
+            <Button type="button" variant="tonal" size="sm" style={{ width: '100%' }} onClick={() => setIsCalcOpen(true)}>
+              <Calculator size={15} />
+              Fee &amp; EDB Simulator
+            </Button>
           </div>
         </div>
+      </section>
 
-        {hostel.description && (
-          <p
-            style={{
-              margin: '1.25rem 0 0',
-              color: 'var(--text)',
-              fontSize: '0.9375rem',
-              lineHeight: 1.6,
-              borderTop: '1px solid var(--border)',
-              paddingTop: '1rem',
-            }}
-          >
-            {hostel.description}
-          </p>
-        )}
-      </div>
-
-      {/* Block & Floor Selector */}
+      {/* Block / Floor Navigation & View Switcher */}
       {hostel.blocks.length > 0 ? (
         <div>
-          {/* Block Selector */}
-          <div
-            style={{
-              display: 'flex',
-              gap: '0.5rem',
-              marginBottom: '1rem',
-              borderBottom: '1px solid var(--border)',
-              paddingBottom: '0.75rem',
-            }}
-          >
-            {hostel.blocks.map((block, idx) => {
-              const isSelected = selectedBlockIdx === idx;
-              return (
-                <button
-                  key={block.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedBlockIdx(idx);
-                    setSelectedFloorIdx(0);
-                  }}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    borderRadius: 'var(--radius-sm)',
-                    fontWeight: 600,
-                    fontSize: '0.875rem',
-                    border: '1px solid',
-                    borderColor: isSelected ? 'var(--ink)' : 'var(--border)',
-                    cursor: 'pointer',
-                    backgroundColor: isSelected ? 'var(--ink)' : 'var(--surface)',
-                    color: isSelected ? '#ffffff' : 'var(--text)',
-                    transition: 'all var(--transition-fast)',
-                  }}
-                >
-                  {block.name}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Floor Selector & Blueprint / Grid Switcher */}
-          {activeBlock && activeBlock.floors.length > 0 && (
+          <Card variant="outlined" style={{ marginBottom: '1.5rem', padding: '1.1rem 1.25rem' }}>
             <div
               style={{
                 display: 'flex',
@@ -233,275 +196,220 @@ export const HostelDetailPage: React.FC = () => {
                 alignItems: 'center',
                 flexWrap: 'wrap',
                 gap: '1rem',
-                marginBottom: '1.5rem',
               }}
             >
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                {activeBlock.floors.map((fl, fIdx) => {
-                  const isSelected = selectedFloorIdx === fIdx;
-                  return (
-                    <button
-                      key={fl.id}
-                      type="button"
-                      onClick={() => setSelectedFloorIdx(fIdx)}
-                      style={{
-                        padding: '0.375rem 0.75rem',
-                        borderRadius: 'var(--radius-sm)',
-                        fontSize: '0.8125rem',
-                        fontWeight: 500,
-                        border: '1px solid',
-                        borderColor: isSelected ? 'var(--primary)' : 'var(--border-strong)',
-                        backgroundColor: isSelected ? 'var(--primary)' : 'var(--surface)',
-                        color: isSelected ? '#ffffff' : 'var(--text)',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {fl.label} (<span className="tabular-nums">{fl.rooms.length}</span> Units)
-                    </button>
-                  );
-                })}
+              {/* Wing & Floor Chips */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.45rem' }}>
+                  <span className="m3-label-medium" style={{ color: 'var(--on-surface-variant)', marginRight: '0.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <Building2 size={14} /> Block:
+                  </span>
+                  {hostel.blocks.map((block, idx) => {
+                    const isActive = idx === selectedBlockIdx;
+                    return (
+                      <button
+                        key={block.id}
+                        type="button"
+                        className={`m3-chip ${isActive ? 'is-active' : ''}`}
+                        onPointerDown={triggerRipple}
+                        onClick={() => {
+                          setSelectedBlockIdx(idx);
+                          setSelectedFloorIdx(0);
+                        }}
+                      >
+                        <RippleOverlay ripples={ripples} color="var(--md-sys-ripple-color)" />
+                        <span style={{ position: 'relative', zIndex: 1 }}>{block.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {activeBlock && activeBlock.floors.length > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.45rem' }}>
+                    <span className="m3-label-medium" style={{ color: 'var(--on-surface-variant)', marginRight: '0.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <Layers size={14} /> Level:
+                    </span>
+                    {activeBlock.floors.map((floor, idx) => {
+                      const isActive = idx === selectedFloorIdx;
+                      return (
+                        <button
+                          key={floor.id}
+                          type="button"
+                          className={`m3-chip ${isActive ? 'is-active' : ''}`}
+                          onPointerDown={triggerRipple}
+                          onClick={() => setSelectedFloorIdx(idx)}
+                        >
+                          <RippleOverlay ripples={ripples} color="var(--md-sys-ripple-color)" />
+                          <span style={{ position: 'relative', zIndex: 1 }}>{floor.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
-              {/* View Switcher: Architectural Blueprint vs Grid */}
-              <div
-                style={{
-                  display: 'flex',
-                  border: '1px solid var(--border-strong)',
-                  backgroundColor: 'var(--surface)',
-                  borderRadius: 'var(--radius-sm)',
-                  overflow: 'hidden',
-                }}
-              >
+              {/* Segmented CAD / Grid View Toggle */}
+              <div className="m3-segmented">
                 <button
                   type="button"
+                  className={`m3-segmented-btn ${viewMode === 'BLUEPRINT' ? 'is-active' : ''}`}
+                  onPointerDown={triggerRipple}
                   onClick={() => setViewMode('BLUEPRINT')}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                    padding: '0.4rem 0.75rem',
-                    fontSize: '0.8125rem',
-                    fontWeight: viewMode === 'BLUEPRINT' ? 600 : 400,
-                    backgroundColor: viewMode === 'BLUEPRINT' ? 'var(--ink)' : 'transparent',
-                    color: viewMode === 'BLUEPRINT' ? '#ffffff' : 'var(--text)',
-                    border: 'none',
-                    cursor: 'pointer',
-                    transition: 'all var(--transition-fast)',
-                  }}
                 >
-                  <Compass size={14} color={viewMode === 'BLUEPRINT' ? '#ffffff' : 'var(--primary)'} />
-                  Architectural Blueprint
+                  <RippleOverlay
+                    ripples={ripples}
+                    color={viewMode === 'BLUEPRINT' ? 'var(--md-sys-ripple-on-primary)' : 'var(--md-sys-ripple-color)'}
+                  />
+                  <Compass size={15} />
+                  <span style={{ position: 'relative', zIndex: 1 }}>CAD Blueprint</span>
                 </button>
                 <button
                   type="button"
+                  className={`m3-segmented-btn ${viewMode === 'GRID' ? 'is-active' : ''}`}
+                  onPointerDown={triggerRipple}
                   onClick={() => setViewMode('GRID')}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                    padding: '0.4rem 0.75rem',
-                    fontSize: '0.8125rem',
-                    fontWeight: viewMode === 'GRID' ? 600 : 400,
-                    backgroundColor: viewMode === 'GRID' ? 'var(--ink)' : 'transparent',
-                    color: viewMode === 'GRID' ? '#ffffff' : 'var(--text)',
-                    border: 'none',
-                    cursor: 'pointer',
-                    transition: 'all var(--transition-fast)',
-                  }}
                 >
-                  <LayoutGrid size={14} />
-                  Inventory Grid
+                  <RippleOverlay
+                    ripples={ripples}
+                    color={viewMode === 'GRID' ? 'var(--md-sys-ripple-on-primary)' : 'var(--md-sys-ripple-color)'}
+                  />
+                  <LayoutGrid size={15} />
+                  <span style={{ position: 'relative', zIndex: 1 }}>Room Grid</span>
                 </button>
               </div>
             </div>
-          )}
+          </Card>
 
-          {/* Rooms Display for Selected Floor: Either Architectural Blueprint or Cards Grid */}
+          {/* Floor Canvas or Room Grid */}
           {activeFloor && activeFloor.rooms.length > 0 ? (
-            <div>
-              {viewMode === 'BLUEPRINT' ? (
-                <ArchitecturalFloorPlan
-                  floorLabel={activeFloor.label}
-                  blockName={activeBlock.name}
-                  rooms={activeFloor.rooms}
-                  onSelectRoom={(r) => setInspectedRoom(r)}
-                  selectedRoomId={inspectedRoom?.id}
-                />
-              ) : (
-                <div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'baseline',
-                      marginBottom: '1rem',
-                    }}
-                  >
-                    <h3
+            viewMode === 'BLUEPRINT' ? (
+              <ArchitecturalFloorPlan
+                floorLabel={activeFloor.label}
+                blockName={activeBlock.name}
+                rooms={activeFloor.rooms}
+                onSelectRoom={(room) => setInspectedRoom(room)}
+                selectedRoomId={inspectedRoom?.id}
+              />
+            ) : (
+              <div>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '1rem',
+                    flexWrap: 'wrap',
+                    gap: '0.5rem',
+                  }}
+                >
+                  <h2 className="m3-title-large" style={{ margin: 0, color: 'var(--on-surface)' }}>
+                    {activeBlock.name} · {activeFloor.label} Rooms
+                  </h2>
+                  <span className="m3-label-medium tabular-nums" style={{ color: 'var(--on-surface-variant)' }}>
+                    {activeFloor.rooms.length} rooms listed
+                  </span>
+                </div>
+
+                <div className="m3-catalog-grid">
+                  {activeFloor.rooms.map((r) => (
+                    <Card
+                      key={r.id}
+                      hoverable
                       style={{
-                        fontFamily: 'var(--font-serif)',
-                        fontSize: '1.25rem',
-                        fontWeight: 600,
-                        color: 'var(--ink)',
-                        margin: 0,
+                        padding: '1.25rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        gap: '0.9rem',
                       }}
                     >
-                      {activeBlock.name} — {activeFloor.label} Inventory
-                    </h3>
-                    <span className="tabular-nums" style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-                      {activeFloor.rooms.length} rooms listed
-                    </span>
-                  </div>
-
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                      gap: '1.25rem',
-                    }}
-                  >
-                    {activeFloor.rooms.map((r: FloorRoomDetail) => (
-                      <Card key={r.id}>
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            marginBottom: '0.75rem',
-                          }}
-                        >
-                          <div style={{ display: 'flex', gap: '0.35rem' }}>
-                            <Badge variant="neutral" size="sm">
-                              <span className="tabular-nums">{r.capacity}</span>-Seater
-                            </Badge>
-                            <Badge variant="neutral" size="sm">
-                              {r.is_air_conditioned ? 'AC' : 'Air-Cooled'}
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem', gap: '0.4rem', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                            <Badge variant="neutral" size="sm">{r.capacity}-Seater</Badge>
+                            <Badge variant={r.is_air_conditioned ? 'info' : 'neutral'} size="sm">
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                                {r.is_air_conditioned ? <Snowflake size={11} /> : <Wind size={11} />}
+                                {r.is_air_conditioned ? 'AC' : 'Cooler'}
+                              </span>
                             </Badge>
                           </div>
-                          <Badge variant={r.vacant_beds_count > 0 ? 'success' : 'danger'} size="sm">
-                            {r.vacant_beds_count > 0 ? `${r.vacant_beds_count} Vacant` : 'Fully Occupied'}
+                          <Badge variant={r.vacant_beds_count > 0 ? 'success' : 'warning'} size="sm">
+                            {r.vacant_beds_count > 0 ? `${r.vacant_beds_count} Vacant` : 'Full'}
                           </Badge>
                         </div>
 
-                        <div style={{ marginBottom: '0.5rem' }}>
-                          <h4
-                            style={{
-                              margin: 0,
-                              fontFamily: 'var(--font-serif)',
-                              fontSize: '1.125rem',
-                              fontWeight: 600,
-                              color: 'var(--ink)',
-                            }}
-                          >
-                            Room <span className="tabular-nums">{r.room_number}</span>
-                          </h4>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            {r.category_display} • {r.washroom_type}
-                          </div>
-                        </div>
-
-                        {r.quota_kwh && (
-                          <div
-                            style={{
-                              fontSize: '0.75rem',
-                              color: 'var(--text-muted)',
-                              marginBottom: '0.75rem',
-                            }}
-                          >
-                            Metered Allowance:{' '}
-                            <strong className="tabular-nums" style={{ color: 'var(--ink)' }}>
-                              {r.quota_kwh} kWh
-                            </strong>{' '}
-                            / session
-                          </div>
-                        )}
-
-                        <div style={{ marginBottom: '1rem' }}>
-                          <div
-                            style={{
-                              fontSize: '0.6875rem',
-                              fontWeight: 600,
-                              color: 'var(--text-muted)',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.05em',
-                              marginBottom: '0.25rem',
-                            }}
-                          >
-                            Bed Occupancy:
-                          </div>
-                          <BedIndicator beds={r.beds} />
-                        </div>
+                        <h3 className="m3-title-large" style={{ margin: '0 0 0.2rem', color: 'var(--on-surface)' }}>
+                          Room {r.room_number}
+                        </h3>
+                        <p className="m3-body-small" style={{ margin: '0 0 0.85rem', color: 'var(--on-surface-variant)' }}>
+                          {r.category_display} · {r.washroom_type === 'ATTACHED' ? 'Attached Bath' : 'Shared Wing Bath'}
+                          {r.quota_kwh ? ` · ${r.quota_kwh} kWh Quota` : ''}
+                        </p>
 
                         <div
                           style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            paddingTop: '0.75rem',
-                            borderTop: '1px solid var(--border)',
+                            padding: '0.75rem',
+                            borderRadius: 'var(--md-sys-shape-corner-medium)',
+                            backgroundColor: 'var(--surface-container-low)',
+                            border: '1px solid var(--outline-variant)',
                           }}
                         >
-                          <div>
-                            {r.standard_fee && (
-                              <div>
-                                <span
-                                  className="tabular-nums"
-                                  style={{ fontSize: '1.0625rem', fontWeight: 600, color: 'var(--ink)' }}
-                                >
-                                  ₹{r.standard_fee.toLocaleString('en-IN')}
-                                </span>
-                                <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', display: 'block' }}>
-                                  10-mo standard
-                                </span>
-                              </div>
-                            )}
+                          <div className="m3-label-small" style={{ color: 'var(--on-surface-variant)', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
+                            Beds
                           </div>
-                          <Button
-                            variant={r.vacant_beds_count > 0 ? 'primary' : 'secondary'}
-                            size="sm"
-                            disabled={r.vacant_beds_count === 0}
-                            onClick={() => setInspectedRoom(r)}
-                          >
-                            {r.vacant_beds_count > 0 ? 'Inspect & Select' : 'Fully Occupied'}
-                          </Button>
+                          <BedIndicator beds={r.beds} />
                         </div>
-                      </Card>
-                    ))}
-                  </div>
+                      </div>
+
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          paddingTop: '0.65rem',
+                          borderTop: '1px solid var(--outline-variant)',
+                        }}
+                      >
+                        <div>
+                          {r.standard_fee && (
+                            <>
+                              <div className="m3-title-medium tabular-nums" style={{ fontWeight: 700, color: 'var(--on-surface)' }}>
+                                ₹{r.standard_fee.toLocaleString('en-IN')}
+                              </div>
+                              <div className="m3-label-small" style={{ color: 'var(--on-surface-variant)' }}>
+                                10-mo standard
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        <Button
+                          variant={r.vacant_beds_count > 0 ? 'primary' : 'secondary'}
+                          size="sm"
+                          disabled={r.vacant_beds_count === 0}
+                          onClick={() => setInspectedRoom(r)}
+                        >
+                          {r.vacant_beds_count > 0 ? 'Inspect & Select' : 'Fully Occupied'}
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
                 </div>
-              )}
-            </div>
+              </div>
+            )
           ) : (
-            <div
-              style={{
-                padding: '2.5rem',
-                textAlign: 'center',
-                color: 'var(--text-muted)',
-                backgroundColor: 'var(--surface)',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--radius-md)',
-              }}
-            >
+            <Card variant="outlined" style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--on-surface-variant)' }}>
               No rooms configured on this floor.
-            </div>
+            </Card>
           )}
         </div>
       ) : (
-        <div
-          style={{
-            padding: '2.5rem',
-            textAlign: 'center',
-            color: 'var(--text-muted)',
-            backgroundColor: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-md)',
-          }}
-        >
+        <Card variant="outlined" style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--on-surface-variant)' }}>
           No residential blocks configured for this hostel complex.
-        </div>
+        </Card>
       )}
 
-      {/* Blueprint Room Inspection & Bed Picker Modal */}
       <RoomInspectionModal
         room={inspectedRoom}
         hostelName={hostel.name}
@@ -510,11 +418,7 @@ export const HostelDetailPage: React.FC = () => {
         onClose={() => setInspectedRoom(null)}
       />
 
-      {/* Residential Economics & Tariff Simulator Modal */}
-      <EconomicsCalculatorModal
-        isOpen={isCalcOpen}
-        onClose={() => setIsCalcOpen(false)}
-      />
+      <EconomicsCalculatorModal isOpen={isCalcOpen} onClose={() => setIsCalcOpen(false)} />
     </div>
   );
 };

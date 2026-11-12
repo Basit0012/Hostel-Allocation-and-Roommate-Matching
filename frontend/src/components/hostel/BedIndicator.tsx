@@ -15,15 +15,15 @@ export const BedIndicator: React.FC<{ beds: BedDetail[] }> = ({ beds }) => {
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: '1.75rem',
-              height: '1.75rem',
-              borderRadius: 'var(--radius-sm)',
+              width: '1.85rem',
+              height: '1.85rem',
+              borderRadius: 'var(--md-sys-shape-corner-small)',
               fontSize: '0.75rem',
               fontFamily: 'var(--font-sans)',
               fontWeight: 600,
               backgroundColor: isVacant ? 'var(--status-success-bg)' : 'var(--status-waitlisted-bg)',
-              color: isVacant ? 'var(--status-success)' : 'var(--status-waitlisted)',
-              border: `1px solid ${isVacant ? 'rgba(30, 107, 58, 0.25)' : 'var(--border)'}`,
+              color: isVacant ? 'var(--md-sys-color-on-success-container)' : 'var(--status-waitlisted)',
+              border: '1px solid var(--outline-variant)',
             }}
           >
             {b.identifier}

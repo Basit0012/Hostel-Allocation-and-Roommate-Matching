@@ -1,32 +1,30 @@
 import React, { useEffect, useState } from 'react';
+import { Inbox, Search, SlidersHorizontal, Sparkles, UserCheck, Users, X } from 'lucide-react';
 import { roommatesApi, DiscoverResponse, RequestsResponse } from '../api/roommatesApi';
-import { RoommatePreferences, RoommateGroupData } from '../types/roommate';
+import { RoommateGroupData, RoommatePreferences } from '../types/roommate';
 import { CandidateCard } from '../components/roommate/CandidateCard';
 import { PreferenceForm } from '../components/roommate/PreferenceForm';
 import { Spinner } from '../components/common/Spinner';
 import { Button } from '../components/common/Button';
 import { Card } from '../components/common/Card';
 import { Badge } from '../components/common/Badge';
+import { ContinuousTabs } from '../components/watermelon/ContinuousTabs';
 
-type ActiveTab = 'DISCOVER' | 'REQUESTS' | 'PREFERENCES' | 'GROUP';
+type ActiveTab = 'DISCOVER' | 'REQUESTS' | 'GROUP' | 'PREFERENCES';
 
 export const RoommatesPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('DISCOVER');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Discover state
   const [discoverData, setDiscoverData] = useState<DiscoverResponse | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
   const [sendingId, setSendingId] = useState<string | null>(null);
 
-  // Requests state
   const [requestsData, setRequestsData] = useState<RequestsResponse | null>(null);
-
-  // Preferences state
   const [preferences, setPreferences] = useState<RoommatePreferences | null>(null);
-
-  // Group state
   const [group, setGroup] = useState<RoommateGroupData | null>(null);
 
   const loadData = async () => {
@@ -44,7 +42,7 @@ export const RoommatesPage: React.FC = () => {
       setGroup(grp?.group || null);
       setError('');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load roommate data.');
+      setError(err instanceof Error ? err.message : 'Failed to load roommate compatibility portal.');
     } finally {
       setIsLoading(false);
     }
@@ -56,151 +54,177 @@ export const RoommatesPage: React.FC = () => {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
+    setIsSearching(true);
+    setFeedback(null);
     try {
-      const res = await roommatesApi.discoverCandidates(searchQuery.trim());
+      const res = await roommatesApi.discoverCandidates(searchQuery.trim() || undefined);
       setDiscoverData(res);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Search failed.');
+      setFeedback({ type: 'error', text: err instanceof Error ? err.message : 'Student lookup failed.' });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleClearSearch = async () => {
+    setSearchQuery('');
+    setIsSearching(true);
+    try {
+      const res = await roommatesApi.discoverCandidates();
+      setDiscoverData(res);
+    } finally {
+      setIsSearching(false);
     }
   };
 
   const handleSendRequest = async (targetStudentId: string) => {
     setSendingId(targetStudentId);
+    setFeedback(null);
     try {
-      await roommatesApi.sendRequest(targetStudentId);
+      const res = await roommatesApi.sendRequest(targetStudentId);
+      setFeedback({ type: 'success', text: res.message || `Roommate request sent to #${targetStudentId}.` });
       await loadData();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Failed to send roommate request.');
+      setFeedback({ type: 'error', text: err instanceof Error ? err.message : 'Failed to send roommate request.' });
     } finally {
       setSendingId(null);
     }
   };
 
   const handleRespondRequest = async (requestId: number, action: 'ACCEPT' | 'REJECT') => {
+    setFeedback(null);
     try {
-      await roommatesApi.respondRequest(requestId, action);
+      const res = await roommatesApi.respondRequest(requestId, action);
+      setFeedback({ type: 'success', text: res.message || (action === 'ACCEPT' ? 'Roommate match accepted.' : 'Request declined.') });
       await loadData();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Failed to respond to request.');
+      setFeedback({ type: 'error', text: err instanceof Error ? err.message : 'Failed to respond to request.' });
     }
   };
 
   const handleCancelRequest = async (requestId: number) => {
+    setFeedback(null);
     try {
-      await roommatesApi.cancelRequest(requestId);
+      const res = await roommatesApi.cancelRequest(requestId);
+      setFeedback({ type: 'success', text: res.message || 'Outgoing request cancelled.' });
       await loadData();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Failed to cancel request.');
+      setFeedback({ type: 'error', text: err instanceof Error ? err.message : 'Failed to cancel request.' });
     }
   };
 
-  const handleSavePreferences = async (newPrefs: RoommatePreferences) => {
-    await roommatesApi.savePreferences(newPrefs);
-    setPreferences(newPrefs);
+  const handleSavePreferences = async (values: RoommatePreferences) => {
+    await roommatesApi.savePreferences(values);
+    setFeedback({ type: 'success', text: '7-Factor lifestyle preferences updated and recommendations recalculated.' });
     await loadData();
+    setActiveTab('DISCOVER');
   };
 
+  const pendingIncomingCount = (requestsData?.received_requests || []).filter((r) => r.status === 'PENDING').length;
   const totalRequestsCount =
     (requestsData?.received_requests.length || 0) + (requestsData?.sent_requests.length || 0);
 
   return (
     <div className="container">
-      {/* Header */}
-      <div style={{ marginBottom: '1.75rem' }}>
-        <h1
-          style={{
-            fontFamily: 'var(--font-serif)',
-            fontSize: '2rem',
-            fontWeight: 600,
-            color: 'var(--ink)',
-            margin: '0 0 0.5rem',
-            letterSpacing: '-0.01em',
-          }}
-        >
-          Roommate Compatibility &amp; Request Center
-        </h1>
-        <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9375rem' }}>
-          Evaluate compatibility via Lovely Professional University&apos;s 7-factor residential algorithm and establish verified roommate pairs or groups.
-        </p>
-      </div>
-
-      {/* Tabs */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '1rem',
-          borderBottom: '1px solid var(--border)',
-          marginBottom: '2rem',
-          overflowX: 'auto',
-        }}
-      >
-        {[
-          { key: 'DISCOVER', label: 'Discover Matches' },
-          {
-            key: 'REQUESTS',
-            label: `Requests (${totalRequestsCount})`,
-          },
-          { key: 'GROUP', label: `Roommate Group ${group ? '(Active)' : ''}` },
-          { key: 'PREFERENCES', label: 'Lifestyle Preferences' },
-        ].map((tab) => {
-          const isActive = activeTab === tab.key;
-          return (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setActiveTab(tab.key as ActiveTab)}
-              style={{
-                padding: '0.625rem 0.5rem',
-                fontWeight: isActive ? 600 : 500,
-                fontSize: '0.9375rem',
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer',
-                color: isActive ? 'var(--ink)' : 'var(--text-muted)',
-                borderBottom: isActive ? '3px solid var(--primary)' : '3px solid transparent',
-                marginBottom: '-1px',
-                whiteSpace: 'nowrap',
-                transition: 'color var(--transition-fast)',
-              }}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Content */}
-      {isLoading ? (
-        <Spinner label="Loading roommate portal..." />
-      ) : error ? (
+      {/* Tonal M3 Header Banner */}
+      <section className="m3-tonal-banner">
         <div
           style={{
-            padding: '2rem',
-            textAlign: 'center',
-            color: 'var(--status-danger)',
-            backgroundColor: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-md)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-end',
+            flexWrap: 'wrap',
+            gap: '1rem',
           }}
         >
-          {error}
+          <div>
+            <span className="m3-eyebrow-pill" style={{ marginBottom: '0.75rem' }}>
+              <Sparkles size={13} />
+              7-Factor Compatibility Engine
+            </span>
+            <h1 className="m3-headline-medium" style={{ margin: '0.25rem 0 0.4rem', color: 'var(--on-surface)' }}>
+              Peer Matching &amp; Group Roster
+            </h1>
+            <p className="m3-body-medium" style={{ margin: 0, color: 'var(--on-surface-variant)', maxWidth: '62ch' }}>
+              Compare deterministic compatibility scores across sleep rhythm, study focus, cleanliness, and cooling preference before forming your mutual roommate group.
+            </p>
+          </div>
+
+          {discoverData?.active_cycle && (
+            <Badge variant="info" size="md">
+              {discoverData.active_cycle}
+            </Badge>
+          )}
         </div>
+      </section>
+
+      {/* Watermelon Animated Segmented Tabs */}
+      <div className="mb-6 overflow-x-auto">
+        <ContinuousTabs
+          value={activeTab}
+          onChange={(id) => setActiveTab(id as ActiveTab)}
+          tabs={[
+            { id: 'DISCOVER', label: 'Discover Peers' },
+            {
+              id: 'REQUESTS',
+              label: `Requests (${pendingIncomingCount > 0 ? `${pendingIncomingCount} New` : totalRequestsCount})`,
+            },
+            { id: 'GROUP', label: group ? `Group #${group.id}` : 'Active Group' },
+            { id: 'PREFERENCES', label: 'Lifestyle Profile' },
+          ]}
+        />
+      </div>
+
+      {/* Inline Feedback Toast / Banner */}
+      {feedback && (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '0.9rem 1.15rem',
+            marginBottom: '1.25rem',
+            borderRadius: 'var(--md-sys-shape-corner-large)',
+            backgroundColor: feedback.type === 'success' ? 'var(--status-success-bg)' : 'var(--error-container)',
+            color: feedback.type === 'success' ? 'var(--md-sys-color-on-success-container)' : 'var(--on-error-container)',
+            border: '1px solid var(--outline-variant)',
+            fontSize: '0.875rem',
+            fontWeight: 500,
+          }}
+        >
+          <span>{feedback.text}</span>
+          <button
+            type="button"
+            aria-label="Dismiss message"
+            onClick={() => setFeedback(null)}
+            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', display: 'flex' }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* Main Workspace */}
+      {isLoading ? (
+        <Spinner label="Evaluating lifestyle compatibility vectors..." />
+      ) : error ? (
+        <Card variant="outlined" style={{ padding: '2rem', textAlign: 'center', color: 'var(--status-danger)' }}>
+          {error}
+        </Card>
       ) : (
         <div>
           {/* TAB 1: DISCOVER */}
           {activeTab === 'DISCOVER' && (
-            <div>
-              {/* Notice if preferences not filled */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               {!discoverData?.has_preferences && (
                 <div
                   style={{
-                    padding: '1.25rem 1.5rem',
-                    backgroundColor: 'var(--surface)',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--border)',
-                    borderLeft: '3px solid #8A5A00',
-                    marginBottom: '1.5rem',
+                    padding: '1.25rem 1.4rem',
+                    borderRadius: 'var(--md-sys-shape-corner-large)',
+                    backgroundColor: 'var(--md-sys-color-warning-container)',
+                    color: 'var(--md-sys-color-on-warning-container)',
+                    border: '1px solid var(--outline-variant)',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
@@ -209,139 +233,97 @@ export const RoommatesPage: React.FC = () => {
                   }}
                 >
                   <div>
-                    <strong style={{ color: 'var(--ink)', fontSize: '0.9375rem', display: 'block', marginBottom: '0.25rem' }}>
-                      Complete your 7-factor lifestyle questionnaire
-                    </strong>
-                    <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-                      Submit your lifestyle habits to compute deterministic compatibility percentages against peer residents.
+                    <div className="m3-title-small" style={{ fontWeight: 700, marginBottom: '0.2rem' }}>
+                      Lifestyle Vector Incomplete
+                    </div>
+                    <div className="m3-body-small" style={{ opacity: 0.92 }}>
+                      Complete the 7-factor questionnaire so the compatibility engine can score your match percentages against same-gender applicants.
                     </div>
                   </div>
                   <Button variant="primary" size="sm" onClick={() => setActiveTab('PREFERENCES')}>
-                    Complete Preferences &rarr;
+                    <SlidersHorizontal size={15} /> Complete Questionnaire
                   </Button>
                 </div>
               )}
 
-              {/* Direct Student ID Search */}
-              <Card style={{ marginBottom: '2rem' }}>
-                <form onSubmit={handleSearch} style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                  <input
-                    type="text"
-                    placeholder="Search by Student Registration ID (e.g. 12400002)..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{
-                      flex: 1,
-                      minWidth: '240px',
-                      height: '38px',
-                      padding: '0 0.875rem',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--border-strong)',
-                      backgroundColor: 'var(--surface)',
-                      color: 'var(--ink)',
-                      fontSize: '0.875rem',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                  <Button type="submit" variant="primary">
-                    Search Student
-                  </Button>
-                </form>
-
-                {/* Direct Search Result */}
-                {discoverData?.search_result && (
-                  <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border)' }}>
-                    <div
-                      style={{
-                        fontSize: '0.6875rem',
-                        fontWeight: 600,
-                        color: 'var(--text-muted)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        marginBottom: '0.75rem',
-                      }}
-                    >
-                      Search Result:
-                    </div>
-                    <div style={{ maxWidth: '420px' }}>
-                      <CandidateCard
-                        candidate={discoverData.search_result}
-                        onSendRequest={handleSendRequest}
-                        isSending={sendingId === discoverData.search_result.student_id}
-                      />
-                    </div>
+              {/* Search Student Form */}
+              <Card variant="outlined" style={{ padding: '1.15rem' }}>
+                <form
+                  onSubmit={handleSearch}
+                  style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}
+                >
+                  <div className="m3-search-shell">
+                    <Search
+                      size={16}
+                      color="var(--on-surface-variant)"
+                      style={{ position: 'absolute', left: '0.95rem', pointerEvents: 'none' }}
+                    />
+                    <input
+                      type="text"
+                      className="m3-search-input"
+                      placeholder="Lookup classmate by exact LPU Student ID (e.g., 12400002)..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                   </div>
-                )}
+                  <Button type="submit" variant="primary" size="md" isLoading={isSearching}>
+                    Lookup Student
+                  </Button>
+                  {discoverData?.search_result && (
+                    <Button type="button" variant="tonal" size="md" onClick={handleClearSearch}>
+                      Clear
+                    </Button>
+                  )}
+                </form>
               </Card>
 
-              {/* Recommendations Feed */}
+              {/* Direct Lookup Result */}
+              {discoverData?.search_result && (
+                <div>
+                  <h2 className="m3-title-large" style={{ margin: '0 0 0.85rem', color: 'var(--on-surface)' }}>
+                    Direct Student Lookup
+                  </h2>
+                  <div style={{ maxWidth: '400px' }}>
+                    <CandidateCard
+                      candidate={discoverData.search_result}
+                      onSendRequest={handleSendRequest}
+                      isSending={sendingId === discoverData.search_result.student_id}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Algorithmic Recommendations Grid */}
               <div>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'baseline',
-                    marginBottom: '1rem',
-                  }}
-                >
-                  <h3
-                    style={{
-                      fontFamily: 'var(--font-serif)',
-                      fontSize: '1.25rem',
-                      fontWeight: 600,
-                      color: 'var(--ink)',
-                      margin: 0,
-                    }}
-                  >
-                    Recommended Roommate Peers
-                  </h3>
-                  <span className="tabular-nums" style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-                    {discoverData?.recommendations.length || 0} candidates evaluated
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.9rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <h2 className="m3-title-large" style={{ margin: 0, color: 'var(--on-surface)' }}>
+                    Recommended Compatibility Matches
+                  </h2>
+                  <span className="m3-label-medium tabular-nums" style={{ color: 'var(--on-surface-variant)' }}>
+                    {discoverData?.recommendations.length || 0} candidates ranked
                   </span>
                 </div>
 
-                {discoverData?.recommendations.length === 0 ? (
-                  <div
-                    style={{
-                      padding: '3rem 2rem',
-                      textAlign: 'center',
-                      backgroundColor: 'var(--surface)',
-                      borderRadius: 'var(--radius-md)',
-                      border: '1px solid var(--border)',
-                    }}
-                  >
-                    <h3
-                      style={{
-                        fontFamily: 'var(--font-serif)',
-                        fontSize: '1.25rem',
-                        fontWeight: 600,
-                        color: 'var(--ink)',
-                        margin: '0 0 0.5rem',
-                      }}
-                    >
-                      No Recommendations Available
-                    </h3>
-                    <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-                      Ensure your questionnaire is saved, or use direct student ID lookup above.
-                    </p>
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-                      gap: '1.25rem',
-                    }}
-                  >
-                    {discoverData?.recommendations.map((cand) => (
+                {discoverData && discoverData.recommendations.length > 0 ? (
+                  <div className="m3-catalog-grid">
+                    {discoverData.recommendations.map((c) => (
                       <CandidateCard
-                        key={cand.student_id}
-                        candidate={cand}
+                        key={c.student_id}
+                        candidate={c}
                         onSendRequest={handleSendRequest}
-                        isSending={sendingId === cand.student_id}
+                        isSending={sendingId === c.student_id}
                       />
                     ))}
                   </div>
+                ) : (
+                  <Card variant="outlined" style={{ padding: '2.5rem', textAlign: 'center' }}>
+                    <h3 className="m3-title-medium" style={{ margin: '0 0 0.4rem', color: 'var(--on-surface)' }}>
+                      No Candidates Ranked Yet
+                    </h3>
+                    <p className="m3-body-medium" style={{ margin: 0, color: 'var(--on-surface-variant)' }}>
+                      No same-gender applicants currently match in this intake cycle or preferences have not yet been saved.
+                    </p>
+                  </Card>
                 )}
               </div>
             </div>
@@ -349,179 +331,100 @@ export const RoommatesPage: React.FC = () => {
 
           {/* TAB 2: REQUESTS */}
           {activeTab === 'REQUESTS' && (
-            <div>
-              {/* Received Requests */}
-              <div style={{ marginBottom: '2.5rem' }}>
-                <h3
-                  style={{
-                    fontFamily: 'var(--font-serif)',
-                    fontSize: '1.25rem',
-                    fontWeight: 600,
-                    color: 'var(--ink)',
-                    marginBottom: '1rem',
-                  }}
-                >
-                  Incoming Roommate Requests ({requestsData?.received_requests.length || 0})
-                </h3>
-                {requestsData?.received_requests.length === 0 ? (
-                  <div
-                    style={{
-                      padding: '1.5rem',
-                      backgroundColor: 'var(--surface)',
-                      borderRadius: 'var(--radius-md)',
-                      border: '1px solid var(--border)',
-                      color: 'var(--text-muted)',
-                      fontSize: '0.875rem',
-                    }}
-                  >
-                    No incoming roommate requests currently pending.
-                  </div>
+            <div className="m3-grid">
+              {/* Incoming */}
+              <div className="m3-span-6">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+                  <h2 className="m3-title-large" style={{ margin: 0, color: 'var(--on-surface)' }}>
+                    Incoming Requests
+                  </h2>
+                  <Badge variant="info" size="sm">
+                    {requestsData?.received_requests.length || 0} Total
+                  </Badge>
+                </div>
+
+                {!requestsData?.received_requests.length ? (
+                  <Card variant="outlined" style={{ padding: '2rem', textAlign: 'center', color: 'var(--on-surface-variant)' }}>
+                    No incoming roommate invitations yet.
+                  </Card>
                 ) : (
-                  <div style={{ display: 'grid', gap: '0.75rem' }}>
-                    {requestsData?.received_requests.map((r) => (
-                      <Card key={r.id}>
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            flexWrap: 'wrap',
-                            gap: '1rem',
-                          }}
-                        >
+                  <div style={{ display: 'grid', gap: '0.85rem' }}>
+                    {requestsData.received_requests.map((r) => (
+                      <Card key={r.id} variant="outlined" style={{ padding: '1.1rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '0.75rem' }}>
                           <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                              <strong
-                                style={{
-                                  fontFamily: 'var(--font-serif)',
-                                  fontSize: '1.0625rem',
-                                  fontWeight: 600,
-                                  color: 'var(--ink)',
-                                }}
-                              >
-                                {r.other_full_name}
-                              </strong>
-                              <Badge variant="neutral" size="sm">
-                                <span className="tabular-nums">#{r.other_student_id}</span>
-                              </Badge>
-                              <Badge
-                                variant={r.status === 'PENDING' ? 'warning' : 'neutral'}
-                                size="sm"
-                              >
-                                {r.status_display}
-                              </Badge>
+                            <div className="m3-title-medium" style={{ fontWeight: 700, color: 'var(--on-surface)' }}>
+                              {r.other_full_name}
                             </div>
-                            <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-                              {r.other_branch} • Received{' '}
-                              <span className="tabular-nums">{r.created_at}</span>
+                            <div className="m3-body-small" style={{ color: 'var(--on-surface-variant)' }}>
+                              <span className="tabular-nums">#{r.other_student_id}</span> · {r.other_branch} · {r.created_at}
                             </div>
                           </div>
-                          {r.status === 'PENDING' && (
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                              <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={() => handleRespondRequest(r.id, 'ACCEPT')}
-                              >
-                                Accept Request
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleRespondRequest(r.id, 'REJECT')}
-                              >
-                                Reject
-                              </Button>
-                            </div>
-                          )}
+                          <Badge
+                            variant={r.status === 'ACCEPTED' ? 'success' : r.status === 'PENDING' ? 'info' : 'neutral'}
+                            size="sm"
+                          >
+                            {r.status_display}
+                          </Badge>
                         </div>
+
+                        {r.status === 'PENDING' && (
+                          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            <Button variant="primary" size="sm" onClick={() => handleRespondRequest(r.id, 'ACCEPT')}>
+                              <UserCheck size={14} /> Accept Match
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => handleRespondRequest(r.id, 'REJECT')}>
+                              Decline
+                            </Button>
+                          </div>
+                        )}
                       </Card>
                     ))}
                   </div>
                 )}
               </div>
 
-              {/* Sent Requests */}
-              <div>
-                <h3
-                  style={{
-                    fontFamily: 'var(--font-serif)',
-                    fontSize: '1.25rem',
-                    fontWeight: 600,
-                    color: 'var(--ink)',
-                    marginBottom: '1rem',
-                  }}
-                >
-                  Sent Requests ({requestsData?.sent_requests.length || 0})
-                </h3>
-                {requestsData?.sent_requests.length === 0 ? (
-                  <div
-                    style={{
-                      padding: '1.5rem',
-                      backgroundColor: 'var(--surface)',
-                      borderRadius: 'var(--radius-md)',
-                      border: '1px solid var(--border)',
-                      color: 'var(--text-muted)',
-                      fontSize: '0.875rem',
-                    }}
-                  >
-                    You have not submitted any pending roommate requests.
-                  </div>
+              {/* Outgoing */}
+              <div className="m3-span-6">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+                  <h2 className="m3-title-large" style={{ margin: 0, color: 'var(--on-surface)' }}>
+                    Sent Invitations
+                  </h2>
+                  <Badge variant="neutral" size="sm">
+                    {requestsData?.sent_requests.length || 0} Sent
+                  </Badge>
+                </div>
+
+                {!requestsData?.sent_requests.length ? (
+                  <Card variant="outlined" style={{ padding: '2rem', textAlign: 'center', color: 'var(--on-surface-variant)' }}>
+                    You have not sent any roommate invitations yet.
+                  </Card>
                 ) : (
-                  <div style={{ display: 'grid', gap: '0.75rem' }}>
-                    {requestsData?.sent_requests.map((r) => (
-                      <Card key={r.id}>
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            flexWrap: 'wrap',
-                            gap: '1rem',
-                          }}
-                        >
+                  <div style={{ display: 'grid', gap: '0.85rem' }}>
+                    {requestsData.sent_requests.map((r) => (
+                      <Card key={r.id} variant="outlined" style={{ padding: '1.1rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', marginBottom: r.status === 'PENDING' ? '0.75rem' : 0 }}>
                           <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                              <strong
-                                style={{
-                                  fontFamily: 'var(--font-serif)',
-                                  fontSize: '1.0625rem',
-                                  fontWeight: 600,
-                                  color: 'var(--ink)',
-                                }}
-                              >
-                                {r.other_full_name}
-                              </strong>
-                              <Badge variant="neutral" size="sm">
-                                <span className="tabular-nums">#{r.other_student_id}</span>
-                              </Badge>
-                              <Badge
-                                variant={
-                                  r.status === 'PENDING'
-                                    ? 'warning'
-                                    : r.status === 'ACCEPTED'
-                                    ? 'success'
-                                    : 'neutral'
-                                }
-                                size="sm"
-                              >
-                                {r.status_display}
-                              </Badge>
+                            <div className="m3-title-medium" style={{ fontWeight: 700, color: 'var(--on-surface)' }}>
+                              {r.other_full_name}
                             </div>
-                            <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-                              {r.other_branch} • Sent <span className="tabular-nums">{r.created_at}</span>
+                            <div className="m3-body-small" style={{ color: 'var(--on-surface-variant)' }}>
+                              <span className="tabular-nums">#{r.other_student_id}</span> · {r.other_branch} · {r.created_at}
                             </div>
                           </div>
-                          {r.status === 'PENDING' && (
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={() => handleCancelRequest(r.id)}
-                            >
-                              Cancel Request
-                            </Button>
-                          )}
+                          <Badge
+                            variant={r.status === 'ACCEPTED' ? 'success' : r.status === 'PENDING' ? 'warning' : 'neutral'}
+                            size="sm"
+                          >
+                            {r.status_display}
+                          </Badge>
                         </div>
+
+                        {r.status === 'PENDING' && (
+                          <Button variant="text" size="sm" onClick={() => handleCancelRequest(r.id)}>
+                            Cancel Request
+                          </Button>
+                        )}
                       </Card>
                     ))}
                   </div>
@@ -532,88 +435,90 @@ export const RoommatesPage: React.FC = () => {
 
           {/* TAB 3: GROUP */}
           {activeTab === 'GROUP' && (
-            <div>
+            <div style={{ maxWidth: '680px', margin: '0 auto' }}>
               {group ? (
-                <Card style={{ maxWidth: '650px', margin: '0 auto' }}>
+                <Card variant="elevated" style={{ padding: '1.5rem' }}>
                   <div
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '0.75rem',
+                      paddingBottom: '1rem',
                       marginBottom: '1rem',
-                      borderBottom: '1px solid var(--border)',
-                      paddingBottom: '0.75rem',
+                      borderBottom: '1px solid var(--outline-variant)',
                     }}
                   >
                     <div>
-                      <h3
-                        style={{
-                          margin: '0 0 0.25rem',
-                          fontFamily: 'var(--font-serif)',
-                          fontSize: '1.25rem',
-                          fontWeight: 600,
-                          color: 'var(--ink)',
-                        }}
-                      >
+                      <span className="m3-eyebrow-pill" style={{ marginBottom: '0.45rem' }}>
                         Roommate Group #{group.id}
-                      </h3>
-                      <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                        Target Room: <strong>{group.target_room.hostel_name} — Room {group.target_room.room_number}</strong>
-                      </div>
+                      </span>
+                      <h2 className="m3-title-large" style={{ margin: '0.2rem 0 0', color: 'var(--on-surface)' }}>
+                        {group.target_room.hostel_name} · Room {group.target_room.room_number}
+                      </h2>
                     </div>
-                    <Badge variant={group.is_confirmed ? 'success' : 'neutral'} size="md">
+
+                    <Badge variant={group.is_confirmed ? 'success' : 'info'} size="md">
                       {group.is_confirmed ? 'Confirmed Roster' : 'Forming Group'}
                     </Badge>
                   </div>
 
+                  {/* Enrollment Progress */}
                   <div
                     style={{
+                      padding: '0.9rem 1rem',
+                      borderRadius: 'var(--md-sys-shape-corner-large)',
+                      backgroundColor: 'var(--surface-container-low)',
+                      border: '1px solid var(--outline-variant)',
                       marginBottom: '1.25rem',
-                      padding: '0.75rem 1rem',
-                      backgroundColor: 'var(--bg)',
-                      border: '1px solid var(--border)',
-                      borderRadius: 'var(--radius-sm)',
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Enrolled Capacity:</span>
-                      <strong className="tabular-nums" style={{ color: 'var(--ink)' }}>
-                        {group.member_count} of {group.capacity} Members
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.45rem', fontSize: '0.875rem' }}>
+                      <span style={{ color: 'var(--on-surface-variant)' }}>Roster Seats Filled</span>
+                      <strong className="tabular-nums" style={{ color: 'var(--on-surface)' }}>
+                        {group.member_count} of {group.capacity} Scholars
                       </strong>
+                    </div>
+                    <div className="m3-progress-track">
+                      <div
+                        className="m3-progress-fill"
+                        style={{
+                          width: `${group.capacity > 0 ? Math.min(100, (group.member_count / group.capacity) * 100) : 0}%`,
+                          backgroundColor: 'var(--primary)',
+                        }}
+                      />
                     </div>
                   </div>
 
-                  <h4
-                    style={{
-                      fontFamily: 'var(--font-serif)',
-                      fontSize: '1rem',
-                      fontWeight: 600,
-                      color: 'var(--ink)',
-                      marginBottom: '0.75rem',
-                    }}
-                  >
-                    Group Scholars:
-                  </h4>
-                  <div style={{ display: 'grid', gap: '0.5rem' }}>
+                  <h3 className="m3-title-medium" style={{ margin: '0 0 0.75rem', color: 'var(--on-surface)' }}>
+                    Confirmed Group Members
+                  </h3>
+                  <div style={{ display: 'grid', gap: '0.6rem' }}>
                     {group.members.map((m) => (
                       <div
                         key={m.student_id}
                         style={{
-                          padding: '0.75rem 1rem',
-                          borderRadius: 'var(--radius-sm)',
-                          border: '1px solid var(--border)',
-                          backgroundColor: 'var(--surface)',
+                          padding: '0.85rem 1rem',
+                          borderRadius: 'var(--md-sys-shape-corner-medium)',
+                          border: '1px solid var(--outline-variant)',
+                          backgroundColor: 'var(--surface-container-low)',
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
+                          flexWrap: 'wrap',
+                          gap: '0.5rem',
                         }}
                       >
                         <div>
-                          <strong style={{ color: 'var(--ink)' }}>{m.full_name}</strong> (
-                          <span className="tabular-nums">#{m.student_id}</span>)
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{m.branch}</div>
+                          <div className="m3-title-small" style={{ color: 'var(--on-surface)', fontWeight: 700 }}>
+                            {m.full_name} <span className="tabular-nums" style={{ color: 'var(--primary)' }}>#{m.student_id}</span>
+                          </div>
+                          <div className="m3-body-small" style={{ color: 'var(--on-surface-variant)' }}>
+                            {m.branch}
+                          </div>
                         </div>
-                        <span className="tabular-nums" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        <span className="m3-label-small tabular-nums" style={{ color: 'var(--on-surface-variant)' }}>
                           Joined {m.joined_at}
                         </span>
                       </div>
@@ -621,55 +526,31 @@ export const RoommatesPage: React.FC = () => {
                   </div>
                 </Card>
               ) : (
-                <div
-                  style={{
-                    padding: '3rem 2rem',
-                    textAlign: 'center',
-                    backgroundColor: 'var(--surface)',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--border)',
-                  }}
-                >
-                  <h3
-                    style={{
-                      fontFamily: 'var(--font-serif)',
-                      fontSize: '1.25rem',
-                      fontWeight: 600,
-                      color: 'var(--ink)',
-                      margin: '0 0 0.5rem',
-                    }}
-                  >
-                    No Active Roommate Group
+                <Card variant="outlined" style={{ padding: '3rem 1.5rem', textAlign: 'center' }}>
+                  <h3 className="m3-title-large" style={{ margin: '0 0 0.45rem', color: 'var(--on-surface)' }}>
+                    No Active Roommate Group Yet
                   </h3>
-                  <p style={{ margin: '0 0 1.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-                    Once mutual roommate requests are accepted for the same room target, your group configuration will appear here.
+                  <p className="m3-body-medium" style={{ margin: '0 0 1.4rem', color: 'var(--on-surface-variant)', maxWidth: '46ch', marginInline: 'auto' }}>
+                    Once mutual roommate invitations are accepted for the same target room configuration, your group roster appears here automatically.
                   </p>
                   <Button variant="primary" onClick={() => setActiveTab('DISCOVER')}>
-                    Discover Compatible Peers &rarr;
+                    Discover Compatible Peers
                   </Button>
-                </div>
+                </Card>
               )}
             </div>
           )}
 
           {/* TAB 4: PREFERENCES */}
           {activeTab === 'PREFERENCES' && (
-            <div style={{ maxWidth: '640px', margin: '0 auto' }}>
-              <Card>
-                <div style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
-                  <h3
-                    style={{
-                      margin: '0 0 0.25rem',
-                      fontFamily: 'var(--font-serif)',
-                      fontSize: '1.25rem',
-                      fontWeight: 600,
-                      color: 'var(--ink)',
-                    }}
-                  >
+            <div style={{ maxWidth: '680px', margin: '0 auto' }}>
+              <Card variant="outlined" style={{ padding: '1.5rem' }}>
+                <div style={{ paddingBottom: '1rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--outline-variant)' }}>
+                  <h2 className="m3-title-large" style={{ margin: '0 0 0.3rem', color: 'var(--on-surface)' }}>
                     7-Factor Lifestyle Questionnaire
-                  </h3>
-                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-                    Responses configure the university matching engine to evaluate compatibility across sleeping schedules, study habits, and cleanliness.
+                  </h2>
+                  <p className="m3-body-medium" style={{ margin: 0, color: 'var(--on-surface-variant)' }}>
+                    Configure your living rhythm across sleep timing, study discipline, cleanliness, guest tolerance, diet, social energy, and thermal preference.
                   </p>
                 </div>
                 <PreferenceForm initialValues={preferences} onSave={handleSavePreferences} />

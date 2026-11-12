@@ -49,8 +49,8 @@ export const RoomInspectionModal: React.FC<RoomInspectionModalProps> = ({
         style={{
           position: 'fixed',
           inset: 0,
-          backgroundColor: 'rgba(26, 26, 26, 0.65)',
-          backdropFilter: 'blur(3px)',
+          backgroundColor: 'var(--md-sys-color-scrim)',
+          backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -65,14 +65,15 @@ export const RoomInspectionModal: React.FC<RoomInspectionModalProps> = ({
           exit={{ opacity: 0, scale: 0.96, y: 8 }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
           style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: '4px',
-            border: '1px solid var(--border)',
+            backgroundColor: 'var(--surface-container-high)',
+            borderRadius: 'var(--md-sys-shape-corner-extra-large)',
+            border: '1px solid var(--outline-variant)',
             width: '100%',
             maxWidth: '580px',
             maxHeight: '90vh',
             overflowY: 'auto',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            overflowX: 'hidden',
+            boxShadow: 'var(--md-sys-elevation-3)',
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -80,11 +81,11 @@ export const RoomInspectionModal: React.FC<RoomInspectionModalProps> = ({
         <div
           style={{
             padding: '1.25rem 1.5rem',
-            borderBottom: '1px solid var(--border)',
+            borderBottom: '1px solid var(--outline-variant)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'flex-start',
-            backgroundColor: '#FAF8F5',
+            backgroundColor: 'var(--surface-container)',
           }}
         >
           <div>
@@ -158,8 +159,9 @@ export const RoomInspectionModal: React.FC<RoomInspectionModalProps> = ({
               gridTemplateColumns: 'repeat(2, 1fr)',
               gap: '1rem',
               padding: '1rem',
-              backgroundColor: '#FAF9F6',
-              border: '1px solid var(--border)',
+              backgroundColor: 'var(--surface-container-low)',
+              border: '1px solid var(--outline-variant)',
+              borderRadius: 'var(--md-sys-shape-corner-medium)',
               marginBottom: '1.25rem',
             }}
           >
@@ -241,15 +243,15 @@ export const RoomInspectionModal: React.FC<RoomInspectionModalProps> = ({
                         isSelected
                           ? 'var(--primary)'
                           : isOccupied
-                          ? 'var(--border)'
-                          : 'var(--border-strong)'
+                          ? 'var(--outline-variant)'
+                          : 'var(--outline)'
                       }`,
                       backgroundColor: isSelected
-                        ? '#FFF5ED'
+                        ? 'var(--primary-container)'
                         : isOccupied
-                        ? '#F5F5F4'
-                        : '#FFFFFF',
-                      borderRadius: '4px',
+                        ? 'var(--surface-container-highest)'
+                        : 'var(--surface-container-lowest)',
+                      borderRadius: 'var(--md-sys-shape-corner-large)',
                       cursor: isOccupied ? 'not-allowed' : 'pointer',
                       display: 'flex',
                       flexDirection: 'column',
@@ -262,16 +264,16 @@ export const RoomInspectionModal: React.FC<RoomInspectionModalProps> = ({
                       <div
                         style={{
                           position: 'absolute',
-                          top: '4px',
-                          right: '4px',
-                          width: '14px',
-                          height: '14px',
+                          top: '6px',
+                          right: '6px',
+                          width: '16px',
+                          height: '16px',
                           backgroundColor: 'var(--primary)',
                           borderRadius: '50%',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: '#fff',
+                          color: 'var(--on-primary)',
                         }}
                       >
                         <Check size={10} strokeWidth={3} />
@@ -279,13 +281,13 @@ export const RoomInspectionModal: React.FC<RoomInspectionModalProps> = ({
                     )}
                     <Bed
                       size={20}
-                      color={isSelected ? 'var(--primary)' : isOccupied ? '#A8A29E' : '#1E6B3A'}
+                      color={isSelected ? 'var(--primary)' : isOccupied ? 'var(--outline)' : 'var(--md-sys-color-success)'}
                     />
                     <div
                       style={{
                         fontSize: '0.875rem',
                         fontWeight: 700,
-                        color: isOccupied ? '#A8A29E' : 'var(--ink)',
+                        color: isOccupied ? 'var(--on-surface-variant)' : 'var(--on-surface)',
                         marginTop: '0.35rem',
                       }}
                     >
@@ -295,7 +297,7 @@ export const RoomInspectionModal: React.FC<RoomInspectionModalProps> = ({
                       style={{
                         fontSize: '0.625rem',
                         fontWeight: 600,
-                        color: isOccupied ? '#A8A29E' : '#1E6B3A',
+                        color: isOccupied ? 'var(--outline)' : 'var(--md-sys-color-success)',
                       }}
                     >
                       {isOccupied ? 'Occupied' : 'Vacant'}
@@ -310,16 +312,16 @@ export const RoomInspectionModal: React.FC<RoomInspectionModalProps> = ({
           {standardFee > 0 && (
             <div
               style={{
-                backgroundColor: '#FAF5EE',
-                border: '1px solid #E4D8C7',
+                backgroundColor: 'var(--surface-container-lowest)',
+                border: '1px solid var(--outline-variant)',
                 padding: '1rem',
-                borderRadius: '4px',
+                borderRadius: 'var(--md-sys-shape-corner-large)',
                 marginBottom: '1.5rem',
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                 <div>
-                  <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                  <span style={{ fontSize: '0.6875rem', color: 'var(--on-surface-variant)', textTransform: 'uppercase' }}>
                     10-Month Academic Fee
                   </span>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
@@ -328,7 +330,7 @@ export const RoomInspectionModal: React.FC<RoomInspectionModalProps> = ({
                         fontFamily: 'var(--font-serif)',
                         fontSize: '1.35rem',
                         fontWeight: 700,
-                        color: 'var(--ink)',
+                        color: 'var(--on-surface)',
                       }}
                     >
                       ₹{edbFee.toLocaleString('en-IN')}
@@ -336,7 +338,7 @@ export const RoomInspectionModal: React.FC<RoomInspectionModalProps> = ({
                     <span
                       style={{
                         textDecoration: 'line-through',
-                        color: 'var(--text-muted)',
+                        color: 'var(--on-surface-variant)',
                         fontSize: '0.875rem',
                       }}
                     >
@@ -347,24 +349,24 @@ export const RoomInspectionModal: React.FC<RoomInspectionModalProps> = ({
 
                 <div
                   style={{
-                    backgroundColor: '#E7F2EA',
-                    border: '1px solid #1E6B3A',
-                    padding: '0.25rem 0.5rem',
-                    borderRadius: '2px',
+                    backgroundColor: 'var(--md-sys-color-success-container)',
+                    border: '1px solid var(--md-sys-color-success)',
+                    padding: '0.3rem 0.65rem',
+                    borderRadius: 'var(--md-sys-shape-corner-medium)',
                     textAlign: 'right',
                   }}
                 >
-                  <div style={{ fontSize: '0.625rem', color: '#1E6B3A', fontWeight: 700, textTransform: 'uppercase' }}>
+                  <div style={{ fontSize: '0.625rem', color: 'var(--md-sys-color-on-success-container)', fontWeight: 700, textTransform: 'uppercase' }}>
                     Early Decision Benefit
                   </div>
-                  <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#1E6B3A' }}>
+                  <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--md-sys-color-on-success-container)' }}>
                     Save ₹{edbSavings.toLocaleString('en-IN')}
                   </div>
                 </div>
               </div>
 
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <ShieldCheck size={14} color="#1E6B3A" />
+              <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <ShieldCheck size={14} color="var(--md-sys-color-success)" />
                 <span>Deterministic pricing verified per official Lovely Professional University hostel schedule.</span>
               </div>
             </div>

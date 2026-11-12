@@ -1,30 +1,32 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, Eye, EyeOff, ShieldCheck, UserPlus } from 'lucide-react';
 import { authApi } from '../api/authApi';
 import { useAuth } from '../context/AuthContext';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 
 export const RegisterPage: React.FC = () => {
-  const navigate = useNavigate();
   const { refreshUser } = useAuth();
+  const navigate = useNavigate();
 
   const [studentId, setStudentId] = useState('');
-  const [email, setEmail] = useState('');
+  const [institutionalEmail, setInstitutionalEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [emergencyName, setEmergencyName] = useState('');
   const [emergencyPhone, setEmergencyPhone] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg('');
+    setError('');
 
     if (password !== confirmPassword) {
-      setErrorMsg('Passwords do not match.');
+      setError('Password and confirmation do not match.');
       return;
     }
 
@@ -32,286 +34,299 @@ export const RegisterPage: React.FC = () => {
     try {
       await authApi.register({
         student_id: studentId.trim(),
-        institutional_email: email.trim(),
+        institutional_email: institutionalEmail.trim(),
         password,
         confirm_password: confirmPassword,
-        emergency_contact_name: emergencyName.trim(),
-        emergency_contact_phone: emergencyPhone.trim(),
+        emergency_contact_name: emergencyName.trim() || undefined,
+        emergency_contact_phone: emergencyPhone.trim() || undefined,
       });
       await refreshUser();
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     } catch (err: unknown) {
-      setErrorMsg(err instanceof Error ? err.message : 'Registration verification failed. Check your Student ID and institutional email.');
+      setError(err instanceof Error ? err.message : 'Unable to claim student account.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="container" style={{ maxWidth: '520px', padding: '3rem 1rem' }}>
-      <Card style={{ padding: '2rem', borderTop: '3px solid var(--brand)' }}>
-        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+    <div className="container" style={{ paddingTop: '0.75rem', paddingBottom: '2rem' }}>
+      <div className="m3-grid" style={{ alignItems: 'stretch' }}>
+        {/* Left Registry Claim Checklist */}
+        <div className="m3-span-5" style={{ display: 'flex' }}>
           <div
             style={{
-              fontSize: '0.6875rem',
-              fontWeight: 600,
-              color: 'var(--primary)',
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              marginBottom: '0.5rem',
+              width: '100%',
+              backgroundColor: 'var(--surface-container-low)',
+              borderRadius: 'var(--md-sys-shape-corner-extra-large, 28px)',
+              border: '1px solid var(--outline-variant)',
+              padding: 'clamp(1.5rem, 3vw, 2.25rem)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              gap: '1.5rem',
             }}
           >
-            Lovely Professional University
-          </div>
-          <h1
-            style={{
-              fontFamily: 'var(--font-serif)',
-              fontSize: '1.625rem',
-              fontWeight: 600,
-              color: 'var(--ink)',
-              margin: '0 0 0.35rem',
-            }}
-          >
-            Claim Student Residence Record
-          </h1>
-          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-            Verify your official university enrollment record to activate residential services
-          </p>
-        </div>
+            <div>
+              <span className="m3-eyebrow-pill" style={{ marginBottom: '1rem' }}>
+                <UserPlus size={13} />
+                ERP Registry Verification
+              </span>
 
-        {errorMsg && (
-          <div
-            style={{
-              padding: '0.75rem 1rem',
-              backgroundColor: 'var(--surface)',
-              color: 'var(--status-danger)',
-              border: '1px solid var(--status-danger)',
-              borderRadius: 'var(--radius-sm)',
-              fontSize: '0.875rem',
-              marginBottom: '1.25rem',
-            }}
-          >
-            {errorMsg}
-          </div>
-        )}
+              <h1 className="m3-headline-medium" style={{ margin: '0 0 0.65rem', color: 'var(--on-surface)' }}>
+                Claim Your Student Account
+              </h1>
+              <p className="m3-body-medium" style={{ margin: '0 0 1.5rem', color: 'var(--on-surface-variant)', lineHeight: 1.55 }}>
+                Your academic roll number must already exist in the official LPU Registrar admissions roster before residential portal access can be provisioned.
+              </p>
 
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label
+              <div style={{ display: 'grid', gap: '0.85rem' }}>
+                {[
+                  {
+                    step: '01',
+                    title: 'Student ID Match',
+                    desc: 'Validated against verified university academic enrollment records.',
+                  },
+                  {
+                    step: '02',
+                    title: 'Institutional Domain Binding',
+                    desc: 'Pairs your portal session to your official @lpu.in email.',
+                  },
+                  {
+                    step: '03',
+                    title: 'Emergency Guardian Telemetry',
+                    desc: 'Used by hostel wardens during late-night outing pass checks.',
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.step}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '0.85rem',
+                      padding: '0.9rem',
+                      borderRadius: 'var(--md-sys-shape-corner-large)',
+                      backgroundColor: 'var(--surface)',
+                      border: '1px solid var(--outline-variant)',
+                    }}
+                  >
+                    <span className="m3-badge-step">{item.step}</span>
+                    <div>
+                      <div className="m3-title-small" style={{ color: 'var(--on-surface)', fontWeight: 700 }}>
+                        {item.title}
+                      </div>
+                      <div className="m3-body-small" style={{ color: 'var(--on-surface-variant)' }}>
+                        {item.desc}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div
               style={{
-                display: 'block',
-                fontSize: '0.6875rem',
-                fontWeight: 600,
-                color: 'var(--text-muted)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                marginBottom: '0.35rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.8125rem',
+                color: 'var(--on-surface-variant)',
               }}
             >
-              Student ID / Registration Number *
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. 12400003"
-              value={studentId}
-              onChange={(e) => setStudentId(e.target.value)}
-              style={{
-                width: '100%',
-                height: '38px',
-                padding: '0 0.75rem',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-strong)',
-                backgroundColor: 'var(--surface)',
-                color: 'var(--ink)',
-                fontSize: '0.875rem',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '0.6875rem',
-                fontWeight: 600,
-                color: 'var(--text-muted)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                marginBottom: '0.35rem',
-              }}
-            >
-              Institutional Email Address *
-            </label>
-            <input
-              type="email"
-              required
-              placeholder="e.g. student@lpu.in"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{
-                width: '100%',
-                height: '38px',
-                padding: '0 0.75rem',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-strong)',
-                backgroundColor: 'var(--surface)',
-                color: 'var(--ink)',
-                fontSize: '0.875rem',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.6875rem',
-                  fontWeight: 600,
-                  color: 'var(--text-muted)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  marginBottom: '0.35rem',
-                }}
-              >
-                Password *
-              </label>
-              <input
-                type="password"
-                required
-                placeholder="Min 8 characters"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                style={{
-                  width: '100%',
-                  height: '38px',
-                  padding: '0 0.75rem',
-                  borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border-strong)',
-                  backgroundColor: 'var(--surface)',
-                  color: 'var(--ink)',
-                  fontSize: '0.875rem',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.6875rem',
-                  fontWeight: 600,
-                  color: 'var(--text-muted)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  marginBottom: '0.35rem',
-                }}
-              >
-                Confirm Password *
-              </label>
-              <input
-                type="password"
-                required
-                placeholder="Repeat password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                style={{
-                  width: '100%',
-                  height: '38px',
-                  padding: '0 0.75rem',
-                  borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border-strong)',
-                  backgroundColor: 'var(--surface)',
-                  color: 'var(--ink)',
-                  fontSize: '0.875rem',
-                  boxSizing: 'border-box',
-                }}
-              />
+              <ShieldCheck size={16} color="var(--primary)" />
+              <span>Protected by session CSRF enforcement &amp; strict RBAC.</span>
             </div>
           </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.5rem' }}>
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.6875rem',
-                  fontWeight: 600,
-                  color: 'var(--text-muted)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  marginBottom: '0.35rem',
-                }}
-              >
-                Guardian Name
-              </label>
-              <input
-                type="text"
-                placeholder="Emergency contact"
-                value={emergencyName}
-                onChange={(e) => setEmergencyName(e.target.value)}
-                style={{
-                  width: '100%',
-                  height: '38px',
-                  padding: '0 0.75rem',
-                  borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border-strong)',
-                  backgroundColor: 'var(--surface)',
-                  color: 'var(--ink)',
-                  fontSize: '0.875rem',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.6875rem',
-                  fontWeight: 600,
-                  color: 'var(--text-muted)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  marginBottom: '0.35rem',
-                }}
-              >
-                Emergency Phone
-              </label>
-              <input
-                type="text"
-                placeholder="+91..."
-                value={emergencyPhone}
-                onChange={(e) => setEmergencyPhone(e.target.value)}
-                style={{
-                  width: '100%',
-                  height: '38px',
-                  padding: '0 0.75rem',
-                  borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border-strong)',
-                  backgroundColor: 'var(--surface)',
-                  color: 'var(--ink)',
-                  fontSize: '0.875rem',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-          </div>
-
-          <Button type="submit" variant="primary" size="lg" isLoading={isLoading} style={{ width: '100%' }}>
-            Verify &amp; Create Account
-          </Button>
-        </form>
-
-        <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-          Already claimed your account?{' '}
-          <Link to="/login" style={{ color: 'var(--primary)', fontWeight: 600 }}>
-            Sign In &rarr;
-          </Link>
         </div>
-      </Card>
+
+        {/* Right Claim Form Card */}
+        <div className="m3-span-7" style={{ display: 'flex' }}>
+          <Card
+            variant="elevated"
+            style={{
+              padding: 'clamp(1.5rem, 3.5vw, 2.5rem)',
+              width: '100%',
+              borderRadius: 'var(--md-sys-shape-corner-extra-large, 28px)',
+            }}
+          >
+            <div style={{ maxWidth: '520px', width: '100%', margin: '0 auto' }}>
+              <h2 className="m3-headline-small" style={{ margin: '0 0 0.35rem', color: 'var(--on-surface)' }}>
+                Activate Scholar Profile
+              </h2>
+              <p className="m3-body-medium" style={{ margin: '0 0 1.4rem', color: 'var(--on-surface-variant)' }}>
+                Enter your university registration number and create your portal password.
+              </p>
+
+              {error && (
+                <div
+                  role="alert"
+                  style={{
+                    padding: '0.85rem 1rem',
+                    marginBottom: '1.25rem',
+                    borderRadius: 'var(--md-sys-shape-corner-medium)',
+                    backgroundColor: 'var(--error-container)',
+                    color: 'var(--on-error-container)',
+                    border: '1px solid var(--outline-variant)',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                  }}
+                >
+                  {error}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1rem' }}>
+                  <div>
+                    <label htmlFor="reg-id" className="m3-label-medium" style={{ display: 'block', color: 'var(--on-surface)', marginBottom: '0.35rem' }}>
+                      Student Roll ID *
+                    </label>
+                    <input
+                      id="reg-id"
+                      type="text"
+                      required
+                      className="m3-field-control"
+                      placeholder="e.g. 12400010"
+                      value={studentId}
+                      onChange={(e) => setStudentId(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="reg-email" className="m3-label-medium" style={{ display: 'block', color: 'var(--on-surface)', marginBottom: '0.35rem' }}>
+                      Institutional Email *
+                    </label>
+                    <input
+                      id="reg-email"
+                      type="email"
+                      required
+                      className="m3-field-control"
+                      placeholder="scholar@lpu.in"
+                      value={institutionalEmail}
+                      onChange={(e) => setInstitutionalEmail(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1rem' }}>
+                  <div>
+                    <label htmlFor="reg-pass" className="m3-label-medium" style={{ display: 'block', color: 'var(--on-surface)', marginBottom: '0.35rem' }}>
+                      Password *
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        id="reg-pass"
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        className="m3-field-control"
+                        style={{ paddingRight: '2.75rem' }}
+                        placeholder="Minimum 8 characters"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        autoComplete="new-password"
+                      />
+                      <button
+                        type="button"
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        style={{
+                          position: 'absolute',
+                          right: '0.65rem',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--on-surface-variant)',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          padding: '0.25rem',
+                        }}
+                      >
+                        {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="reg-confirm" className="m3-label-medium" style={{ display: 'block', color: 'var(--on-surface)', marginBottom: '0.35rem' }}>
+                      Confirm Password *
+                    </label>
+                    <input
+                      id="reg-confirm"
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      className="m3-field-control"
+                      placeholder="Re-enter password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      autoComplete="new-password"
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1rem' }}>
+                  <div>
+                    <label htmlFor="reg-emg-name" className="m3-label-medium" style={{ display: 'block', color: 'var(--on-surface)', marginBottom: '0.35rem' }}>
+                      Guardian Name (Optional)
+                    </label>
+                    <input
+                      id="reg-emg-name"
+                      type="text"
+                      className="m3-field-control"
+                      placeholder="Parent / Guardian full name"
+                      value={emergencyName}
+                      onChange={(e) => setEmergencyName(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="reg-emg-phone" className="m3-label-medium" style={{ display: 'block', color: 'var(--on-surface)', marginBottom: '0.35rem' }}>
+                      Guardian Phone (Optional)
+                    </label>
+                    <input
+                      id="reg-emg-phone"
+                      type="tel"
+                      className="m3-field-control"
+                      placeholder="+91 98XXXXXXXX"
+                      value={emergencyPhone}
+                      onChange={(e) => setEmergencyPhone(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <Button type="submit" variant="primary" size="lg" isLoading={isLoading} style={{ width: '100%', marginTop: '0.4rem' }}>
+                  Verify &amp; Activate Account
+                  <ArrowRight size={17} />
+                </Button>
+              </form>
+
+              <div
+                style={{
+                  marginTop: '1.4rem',
+                  paddingTop: '1.15rem',
+                  borderTop: '1px solid var(--outline-variant)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '0.5rem',
+                }}
+              >
+                <span className="m3-body-small" style={{ color: 'var(--on-surface-variant)' }}>
+                  Already activated your institutional credentials?
+                </span>
+                <Link
+                  to="/login"
+                  className="m3-label-large"
+                  style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 700 }}
+                >
+                  Sign In &rarr;
+                </Link>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

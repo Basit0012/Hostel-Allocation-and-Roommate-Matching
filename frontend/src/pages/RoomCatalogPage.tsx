@@ -1,49 +1,56 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { BedDouble, Check, RotateCcw, Search, SlidersHorizontal, Snowflake } from 'lucide-react';
 import { hostelsApi } from '../api/hostelsApi';
-import { RoomSummary, RoomFilterState } from '../types/room';
 import { HostelSummary } from '../types/hostel';
+import { RoomFilterState, RoomSummary } from '../types/room';
 import { RoomCard } from '../components/hostel/RoomCard';
 import { Spinner } from '../components/common/Spinner';
+import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
-import { useNavigate } from 'react-router-dom';
+import { RippleOverlay, useM3Ripple } from '../components/common/Ripple';
 
 export const RoomCatalogPage: React.FC = () => {
   const navigate = useNavigate();
-  const [rooms, setRooms] = useState<RoomSummary[]>([]);
+  const [searchParams] = useSearchParams();
+  const { ripples, triggerRipple } = useM3Ripple();
+
   const [hostels, setHostels] = useState<HostelSummary[]>([]);
+  const [rooms, setRooms] = useState<RoomSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const [filters, setFilters] = useState<RoomFilterState>({
-    hostel_id: '',
-    gender: '',
-    seater: '',
-    cooling: '',
-    category: '',
-    washroom_type: '',
-    vacant_only: false,
-    search: '',
-  });
+  const [filters, setFilters] = useState<RoomFilterState>(() => ({
+    hostel_id: searchParams.get('hostel_id') || '',
+    gender: searchParams.get('gender') || '',
+    seater: searchParams.get('seater') || '',
+    cooling: searchParams.get('cooling') || '',
+    category: searchParams.get('category') || '',
+    washroom_type: searchParams.get('washroom_type') || '',
+    vacant_only: searchParams.get('vacant_only') === 'true',
+    search: searchParams.get('q') || '',
+  }));
 
-  // Load hostels for dropdown filter
   useEffect(() => {
-    hostelsApi.getHostels().then((d) => setHostels(d.hostels)).catch(() => {});
+    hostelsApi
+      .getHostels()
+      .then((res) => setHostels(res.hostels))
+      .catch(() => {});
   }, []);
 
-  // Fetch rooms on filter change
   useEffect(() => {
     setIsLoading(true);
     hostelsApi
       .getRooms(filters)
-      .then((data) => {
-        setRooms(data.rooms);
+      .then((res) => {
+        setRooms(res.rooms);
         setError('');
       })
-      .catch((err) => setError(err.message || 'Failed to load rooms.'))
+      .catch((err) => setError(err.message || 'Failed to load campus room catalog.'))
       .finally(() => setIsLoading(false));
   }, [filters]);
 
-  const handleFilterChange = (key: keyof RoomFilterState, value: unknown) => {
+  const handleFilterChange = <K extends keyof RoomFilterState>(key: K, value: RoomFilterState[K]) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -61,227 +68,239 @@ export const RoomCatalogPage: React.FC = () => {
   };
 
   const handleSelectRoom = (room: RoomSummary) => {
-    navigate(`/apply?room=${room.id}&hostel=${room.hostel_id}`);
+    navigate(`/apply?hostel=${room.hostel_id}&room=${room.id}`);
   };
+
+  const toggleSeaterChip = (seater: string) => {
+    handleFilterChange('seater', filters.seater === seater ? '' : seater);
+  };
+
+  const toggleCoolingChip = (cooling: string) => {
+    handleFilterChange('cooling', filters.cooling === cooling ? '' : cooling);
+  };
+
+  const hasActiveFilters = Boolean(
+    filters.hostel_id ||
+      filters.gender ||
+      filters.seater ||
+      filters.cooling ||
+      filters.category ||
+      filters.washroom_type ||
+      filters.vacant_only ||
+      filters.search,
+  );
 
   return (
     <div className="container">
-      {/* Title */}
-      <div style={{ marginBottom: '1.75rem' }}>
-        <h1
+      {/* Tonal Header Banner */}
+      <section className="m3-tonal-banner">
+        <div
           style={{
-            fontFamily: 'var(--font-serif)',
-            fontSize: '2rem',
-            fontWeight: 600,
-            color: 'var(--ink)',
-            margin: '0 0 0.5rem',
-            letterSpacing: '-0.01em',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-end',
+            flexWrap: 'wrap',
+            gap: '1rem',
           }}
         >
-          Room Inventory &amp; Tariff Catalog
-        </h1>
-        <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9375rem' }}>
-          Explore residential rooms across BH-1 through BH-8 and GH-1 through GH-6. Review standard 10-month fees, Early Decision Benefits (EDB), and electricity allowances.
-        </p>
-      </div>
+          <div>
+            <span className="m3-eyebrow-pill" style={{ marginBottom: '0.75rem' }}>
+              <BedDouble size={13} />
+              Live Room &amp; Quota Catalog
+            </span>
+            <h1 className="m3-headline-medium" style={{ margin: '0.25rem 0 0.4rem', color: 'var(--on-surface)' }}>
+              Filter Campus Room Inventory
+            </h1>
+            <p className="m3-body-medium" style={{ margin: 0, color: 'var(--on-surface-variant)', maxWidth: '62ch' }}>
+              Compare standard vs. Early Decision Benefit tariffs, metered electricity allowances, washroom configurations, and real-time vacant beds before selecting your Choice #1 room.
+            </p>
+          </div>
 
-      {/* Filter Toolbar */}
-      <div
-        style={{
-          backgroundColor: 'var(--surface)',
-          padding: '1.25rem',
-          borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--border)',
-          marginBottom: '2rem',
-        }}
-      >
+          {!isLoading && !error && (
+            <div
+              style={{
+                padding: '0.75rem 1.2rem',
+                borderRadius: 'var(--md-sys-shape-corner-large)',
+                backgroundColor: 'var(--surface)',
+                border: '1px solid var(--outline-variant)',
+                textAlign: 'right',
+              }}
+            >
+              <div className="m3-label-small" style={{ color: 'var(--on-surface-variant)', textTransform: 'uppercase' }}>
+                Matching Rooms
+              </div>
+              <div className="m3-title-large tabular-nums" style={{ color: 'var(--primary)', fontWeight: 700 }}>
+                {rooms.length}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Expressive M3 Quick Filter Chips + Detailed Matrix */}
+      <Card variant="outlined" style={{ marginBottom: '1.5rem', padding: '1.25rem' }}>
+        {/* Quick Filter Chips Bar */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.6rem',
+            paddingBottom: '1rem',
+            marginBottom: '1rem',
+            borderBottom: '1px solid var(--outline-variant)',
+          }}
+        >
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
+            <span className="m3-label-medium" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: 'var(--on-surface-variant)', marginRight: '0.25rem' }}>
+              <SlidersHorizontal size={14} /> Quick Presets:
+            </span>
+
+            <button
+              type="button"
+              className={`m3-chip ${filters.vacant_only ? 'is-active' : ''}`}
+              onPointerDown={triggerRipple}
+              onClick={() => handleFilterChange('vacant_only', !filters.vacant_only)}
+            >
+              <RippleOverlay ripples={ripples} color="var(--md-sys-ripple-color)" />
+              {filters.vacant_only && <Check size={14} />}
+              <span>Vacant Only</span>
+            </button>
+
+            <button
+              type="button"
+              className={`m3-chip ${filters.cooling === 'AC' ? 'is-active' : ''}`}
+              onPointerDown={triggerRipple}
+              onClick={() => toggleCoolingChip('AC')}
+            >
+              <RippleOverlay ripples={ripples} color="var(--md-sys-ripple-color)" />
+              <Snowflake size={14} />
+              <span>AC Only</span>
+            </button>
+
+            <button
+              type="button"
+              className={`m3-chip ${filters.seater === '1' ? 'is-active' : ''}`}
+              onPointerDown={triggerRipple}
+              onClick={() => toggleSeaterChip('1')}
+            >
+              <RippleOverlay ripples={ripples} color="var(--md-sys-ripple-color)" />
+              <span>1-Seater Studio</span>
+            </button>
+
+            <button
+              type="button"
+              className={`m3-chip ${filters.seater === '2' ? 'is-active' : ''}`}
+              onPointerDown={triggerRipple}
+              onClick={() => toggleSeaterChip('2')}
+            >
+              <RippleOverlay ripples={ripples} color="var(--md-sys-ripple-color)" />
+              <span>2-Seater</span>
+            </button>
+
+            <button
+              type="button"
+              className={`m3-chip ${filters.seater === '4' ? 'is-active' : ''}`}
+              onPointerDown={triggerRipple}
+              onClick={() => toggleSeaterChip('4')}
+            >
+              <RippleOverlay ripples={ripples} color="var(--md-sys-ripple-color)" />
+              <span>4-Seater</span>
+            </button>
+          </div>
+
+          {hasActiveFilters && (
+            <Button variant="text" size="sm" onClick={handleResetFilters}>
+              <RotateCcw size={14} />
+              Reset Filters
+            </Button>
+          )}
+        </div>
+
+        {/* Structured Attribute Filter Grid */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: '1rem',
-            marginBottom: '1rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(175px, 1fr))',
+            gap: '0.85rem',
+            marginBottom: '0.9rem',
           }}
         >
-          {/* Hostel Filter */}
           <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '0.6875rem',
-                fontWeight: 600,
-                color: 'var(--text-muted)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                marginBottom: '0.35rem',
-              }}
-            >
+            <label className="m3-label-small" style={{ display: 'block', color: 'var(--on-surface-variant)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
               Hostel Complex
             </label>
             <select
+              className="m3-field-control"
               value={filters.hostel_id}
               onChange={(e) => handleFilterChange('hostel_id', e.target.value)}
-              style={{
-                width: '100%',
-                height: '38px',
-                padding: '0 0.75rem',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-strong)',
-                backgroundColor: 'var(--surface)',
-                color: 'var(--ink)',
-                fontSize: '0.875rem',
-                boxSizing: 'border-box',
-              }}
             >
               <option value="">All 14 Hostels</option>
               {hostels.map((h) => (
                 <option key={h.id} value={h.id}>
-                  {h.code} — {h.name}
+                  {h.code} · {h.name}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Gender */}
           <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '0.6875rem',
-                fontWeight: 600,
-                color: 'var(--text-muted)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                marginBottom: '0.35rem',
-              }}
-            >
-              Gender Designation
+            <label className="m3-label-small" style={{ display: 'block', color: 'var(--on-surface-variant)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+              Gender Policy
             </label>
             <select
+              className="m3-field-control"
               value={filters.gender}
               onChange={(e) => handleFilterChange('gender', e.target.value)}
-              style={{
-                width: '100%',
-                height: '38px',
-                padding: '0 0.75rem',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-strong)',
-                backgroundColor: 'var(--surface)',
-                color: 'var(--ink)',
-                fontSize: '0.875rem',
-                boxSizing: 'border-box',
-              }}
             >
-              <option value="">All Genders</option>
-              <option value="MALE">Boys Hostels (BH-1 to BH-8)</option>
-              <option value="FEMALE">Girls Hostels (GH-1 to GH-6)</option>
+              <option value="">All Wings</option>
+              <option value="MALE">Boys Hostels</option>
+              <option value="FEMALE">Girls Hostels</option>
             </select>
           </div>
 
-          {/* Seater */}
           <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '0.6875rem',
-                fontWeight: 600,
-                color: 'var(--text-muted)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                marginBottom: '0.35rem',
-              }}
-            >
-              Occupancy Seater
+            <label className="m3-label-small" style={{ display: 'block', color: 'var(--on-surface-variant)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+              Seater Capacity
             </label>
             <select
+              className="m3-field-control"
               value={filters.seater}
               onChange={(e) => handleFilterChange('seater', e.target.value)}
-              style={{
-                width: '100%',
-                height: '38px',
-                padding: '0 0.75rem',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-strong)',
-                backgroundColor: 'var(--surface)',
-                color: 'var(--ink)',
-                fontSize: '0.875rem',
-                boxSizing: 'border-box',
-              }}
             >
               <option value="">All Capacities</option>
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
-                <option key={s} value={s}>
-                  {s}-Seater Room
-                </option>
-              ))}
+              <option value="1">1-Seater</option>
+              <option value="2">2-Seater</option>
+              <option value="3">3-Seater</option>
+              <option value="4">4-Seater</option>
+              <option value="6">6-Seater Dorm</option>
             </select>
           </div>
 
-          {/* Cooling */}
           <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '0.6875rem',
-                fontWeight: 600,
-                color: 'var(--text-muted)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                marginBottom: '0.35rem',
-              }}
-            >
+            <label className="m3-label-small" style={{ display: 'block', color: 'var(--on-surface-variant)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
               Cooling System
             </label>
             <select
+              className="m3-field-control"
               value={filters.cooling}
               onChange={(e) => handleFilterChange('cooling', e.target.value)}
-              style={{
-                width: '100%',
-                height: '38px',
-                padding: '0 0.75rem',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-strong)',
-                backgroundColor: 'var(--surface)',
-                color: 'var(--ink)',
-                fontSize: '0.875rem',
-                boxSizing: 'border-box',
-              }}
             >
-              <option value="">All Cooling Systems</option>
-              <option value="AC">Air-Conditioned (AC)</option>
-              <option value="COOLER">Air-Cooled</option>
+              <option value="">Any Cooling</option>
+              <option value="AC">Air Conditioned (AC)</option>
+              <option value="COOLER">Air Cooled (Cooler)</option>
             </select>
           </div>
 
-          {/* Category */}
           <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '0.6875rem',
-                fontWeight: 600,
-                color: 'var(--text-muted)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                marginBottom: '0.35rem',
-              }}
-            >
-              Room Category
+            <label className="m3-label-small" style={{ display: 'block', color: 'var(--on-surface-variant)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+              Category
             </label>
             <select
+              className="m3-field-control"
               value={filters.category}
               onChange={(e) => handleFilterChange('category', e.target.value)}
-              style={{
-                width: '100%',
-                height: '38px',
-                padding: '0 0.75rem',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-strong)',
-                backgroundColor: 'var(--surface)',
-                color: 'var(--ink)',
-                fontSize: '0.875rem',
-                boxSizing: 'border-box',
-              }}
             >
               <option value="">All Categories</option>
               <option value="STANDARD">Standard Room</option>
@@ -289,123 +308,60 @@ export const RoomCatalogPage: React.FC = () => {
               <option value="DORMITORY">Dormitory</option>
             </select>
           </div>
-        </div>
 
-        {/* Search, Vacant Toggle & Reset */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '1rem',
-            paddingTop: '0.875rem',
-            borderTop: '1px solid var(--border)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flex: 1, minWidth: '260px' }}>
-            <input
-              type="text"
-              placeholder="Search room number (e.g. 101, 204)..."
-              value={filters.search}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
-              style={{
-                width: '100%',
-                maxWidth: '300px',
-                height: '36px',
-                padding: '0 0.75rem',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-strong)',
-                backgroundColor: 'var(--surface)',
-                color: 'var(--ink)',
-                fontSize: '0.875rem',
-                boxSizing: 'border-box',
-              }}
-            />
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                fontSize: '0.875rem',
-                color: 'var(--text)',
-                cursor: 'pointer',
-                userSelect: 'none',
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={filters.vacant_only}
-                onChange={(e) => handleFilterChange('vacant_only', e.target.checked)}
-                style={{ accentColor: 'var(--primary)' }}
-              />
-              Show Vacant Beds Only
+          <div>
+            <label className="m3-label-small" style={{ display: 'block', color: 'var(--on-surface-variant)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+              Washroom
             </label>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-              Showing <strong className="tabular-nums" style={{ color: 'var(--ink)' }}>{rooms.length}</strong> room records
-            </span>
-            <Button variant="secondary" size="sm" onClick={handleResetFilters}>
-              Reset Filters
-            </Button>
+            <select
+              className="m3-field-control"
+              value={filters.washroom_type}
+              onChange={(e) => handleFilterChange('washroom_type', e.target.value)}
+            >
+              <option value="">Any Type</option>
+              <option value="ATTACHED">Attached</option>
+              <option value="SHARED">Shared Wing</option>
+            </select>
           </div>
         </div>
-      </div>
 
-      {/* Rooms Grid */}
+        <div className="m3-search-shell">
+          <Search
+            size={16}
+            color="var(--on-surface-variant)"
+            style={{ position: 'absolute', left: '0.95rem', pointerEvents: 'none' }}
+          />
+          <input
+            type="text"
+            className="m3-search-input"
+            placeholder="Search by room number (e.g., 101, 204) or hostel code..."
+            value={filters.search}
+            onChange={(e) => handleFilterChange('search', e.target.value)}
+          />
+        </div>
+      </Card>
+
+      {/* Catalog Grid */}
       {isLoading ? (
-        <Spinner label="Filtering room inventory..." />
+        <Spinner label="Filtering campus room inventory..." />
       ) : error ? (
-        <div
-          style={{
-            padding: '2rem',
-            textAlign: 'center',
-            color: 'var(--status-danger)',
-            backgroundColor: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-md)',
-          }}
-        >
+        <Card variant="outlined" style={{ padding: '2rem', textAlign: 'center', color: 'var(--status-danger)' }}>
           {error}
-        </div>
+        </Card>
       ) : rooms.length === 0 ? (
-        <div
-          style={{
-            padding: '3rem 2rem',
-            textAlign: 'center',
-            backgroundColor: 'var(--surface)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border)',
-          }}
-        >
-          <h3
-            style={{
-              fontFamily: 'var(--font-serif)',
-              fontSize: '1.25rem',
-              fontWeight: 600,
-              color: 'var(--ink)',
-              margin: '0 0 0.5rem',
-            }}
-          >
+        <Card variant="outlined" style={{ padding: '3rem 1.5rem', textAlign: 'center' }}>
+          <h3 className="m3-title-large" style={{ margin: '0 0 0.4rem', color: 'var(--on-surface)' }}>
             No Room Records Found
           </h3>
-          <p style={{ margin: '0 0 1.25rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+          <p className="m3-body-medium" style={{ margin: '0 0 1.25rem', color: 'var(--on-surface-variant)' }}>
             No room accommodations match the current filter selection.
           </p>
-          <Button variant="secondary" size="sm" onClick={handleResetFilters}>
+          <Button variant="tonal" size="sm" onClick={handleResetFilters}>
             Clear All Filters
           </Button>
-        </div>
+        </Card>
       ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-            gap: '1.25rem',
-          }}
-        >
+        <div className="m3-catalog-grid">
           {rooms.map((room) => (
             <RoomCard key={room.id} room={room} onSelect={handleSelectRoom} />
           ))}

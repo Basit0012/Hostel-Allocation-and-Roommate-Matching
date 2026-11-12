@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { RoommatePreferences, FoodPreference } from '../../types/roommate';
 import { Button } from '../common/Button';
 
@@ -91,34 +92,19 @@ export const PreferenceForm: React.FC<PreferenceFormProps> = ({ initialValues, o
     <form onSubmit={handleSubmit}>
       {successMsg && (
         <div
-          style={{
-            padding: '0.75rem 1rem',
-            backgroundColor: 'var(--status-success-bg)',
-            color: 'var(--status-success)',
-            border: '1px solid rgba(30, 107, 58, 0.25)',
-            borderRadius: 'var(--radius-md)',
-            marginBottom: '1rem',
-            fontSize: '0.875rem',
-            fontWeight: 500,
-          }}
+          className="mb-4 flex items-center gap-2 rounded-lg border border-[var(--available-border)] bg-[var(--available-bg)] px-3.5 py-2.5 text-sm font-medium text-[var(--available-ink)]"
         >
-          ✓ {successMsg}
+          <CheckCircle2 size={16} aria-hidden="true" />
+          <span>{successMsg}</span>
         </div>
       )}
 
       {errorMsg && (
         <div
-          style={{
-            padding: '0.75rem 1rem',
-            backgroundColor: 'var(--status-danger-bg)',
-            color: 'var(--status-danger)',
-            border: '1px solid rgba(164, 22, 26, 0.25)',
-            borderRadius: 'var(--radius-md)',
-            marginBottom: '1rem',
-            fontSize: '0.875rem',
-          }}
+          className="mb-4 flex items-center gap-2 rounded-lg border border-[var(--danger-border)] bg-[var(--danger-bg)] px-3.5 py-2.5 text-sm font-medium text-[var(--danger-ink)]"
         >
-          ⚠ {errorMsg}
+          <AlertTriangle size={16} aria-hidden="true" />
+          <span>{errorMsg}</span>
         </div>
       )}
 
@@ -174,14 +160,14 @@ export const PreferenceForm: React.FC<PreferenceFormProps> = ({ initialValues, o
               style={{
                 flex: 1,
                 padding: '0.625rem 0.5rem',
-                borderRadius: 'var(--radius-md)',
-                border: `1px solid ${foodPreference === item.val ? 'var(--primary)' : 'var(--border)'}`,
-                backgroundColor: foodPreference === item.val ? '#FAF8F3' : 'var(--surface)',
+                borderRadius: 'var(--radius-pill)',
+                border: `1px solid ${foodPreference === item.val ? 'var(--primary)' : 'var(--outline-variant)'}`,
+                backgroundColor: foodPreference === item.val ? 'var(--primary-container)' : 'var(--surface-container-lowest)',
                 textAlign: 'center',
                 fontSize: '0.8125rem',
                 cursor: 'pointer',
                 fontWeight: foodPreference === item.val ? 600 : 400,
-                color: foodPreference === item.val ? 'var(--primary)' : 'var(--text)',
+                color: foodPreference === item.val ? 'var(--on-primary-container)' : 'var(--on-surface)',
                 transition: 'border-color var(--transition-fast), background-color var(--transition-fast)',
               }}
             >

@@ -104,9 +104,9 @@ export const RoommateHarmonyRadar: React.FC<RoommateHarmonyRadarProps> = ({
   return (
     <div
       style={{
-        backgroundColor: '#FFFFFF',
-        border: '1px solid var(--border)',
-        borderRadius: '2px',
+        backgroundColor: 'var(--surface-container-lowest)',
+        border: '1px solid var(--outline-variant)',
+        borderRadius: 'var(--md-sys-shape-corner-large)',
         padding: compact ? '0.75rem' : '1.25rem',
       }}
     >
@@ -121,7 +121,7 @@ export const RoommateHarmonyRadar: React.FC<RoommateHarmonyRadarProps> = ({
         <div>
           <span
             style={{
-              fontFamily: 'monospace',
+              fontFamily: 'var(--font-mono)',
               fontSize: '0.625rem',
               fontWeight: 700,
               textTransform: 'uppercase',
@@ -131,7 +131,7 @@ export const RoommateHarmonyRadar: React.FC<RoommateHarmonyRadarProps> = ({
           >
             7-Factor Harmony Radar
           </span>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
             Lifestyle & Study Symmetry
           </div>
         </div>
@@ -141,18 +141,18 @@ export const RoommateHarmonyRadar: React.FC<RoommateHarmonyRadarProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: '0.35rem',
-            padding: '0.2rem 0.5rem',
-            backgroundColor: matchPct >= 80 ? '#E7F2EA' : '#FBF1DC',
-            border: `1px solid ${matchPct >= 80 ? '#1E6B3A' : '#8A5A00'}`,
-            borderRadius: '2px',
+            padding: '0.25rem 0.65rem',
+            backgroundColor: matchPct >= 80 ? 'var(--md-sys-color-success-container)' : 'var(--md-sys-color-warning-container)',
+            border: `1px solid ${matchPct >= 80 ? 'var(--md-sys-color-success)' : 'var(--md-sys-color-warning)'}`,
+            borderRadius: 'var(--radius-pill)',
           }}
         >
-          <Sparkles size={12} color={matchPct >= 80 ? '#1E6B3A' : '#8A5A00'} />
+          <Sparkles size={12} color={matchPct >= 80 ? 'var(--md-sys-color-on-success-container)' : 'var(--md-sys-color-on-warning-container)'} />
           <span
             style={{
               fontWeight: 700,
               fontSize: '0.8125rem',
-              color: matchPct >= 80 ? '#1E6B3A' : '#8A5A00',
+              color: matchPct >= 80 ? 'var(--md-sys-color-on-success-container)' : 'var(--md-sys-color-on-warning-container)',
             }}
           >
             {matchPct}% Match
@@ -169,7 +169,7 @@ export const RoommateHarmonyRadar: React.FC<RoommateHarmonyRadarProps> = ({
               key={idx}
               points={pts}
               fill="none"
-              stroke="#E8E4DC"
+              stroke="var(--outline-variant)"
               strokeWidth="0.8"
               strokeDasharray={idx < 3 ? '2,2' : undefined}
             />
@@ -185,7 +185,7 @@ export const RoommateHarmonyRadar: React.FC<RoommateHarmonyRadarProps> = ({
                 y1={center}
                 x2={x}
                 y2={y}
-                stroke="#E8E4DC"
+                stroke="var(--outline-variant)"
                 strokeWidth="0.8"
               />
             );
@@ -194,7 +194,7 @@ export const RoommateHarmonyRadar: React.FC<RoommateHarmonyRadarProps> = ({
           {/* Candidate Profile Polygon */}
           <polygon
             points={polygonPoints}
-            fill="rgba(194, 65, 12, 0.2)"
+            fill="var(--md-sys-state-pressed)"
             stroke="var(--primary)"
             strokeWidth="1.6"
           />
@@ -207,9 +207,9 @@ export const RoommateHarmonyRadar: React.FC<RoommateHarmonyRadarProps> = ({
                 key={i}
                 cx={x}
                 cy={y}
-                r="3"
-                fill={d.aligned ? '#1E6B3A' : 'var(--primary)'}
-                stroke="#fff"
+                r="3.2"
+                fill={d.aligned ? 'var(--md-sys-color-success)' : 'var(--primary)'}
+                stroke="var(--surface-container-lowest)"
                 strokeWidth="1.2"
               />
             );
@@ -219,7 +219,7 @@ export const RoommateHarmonyRadar: React.FC<RoommateHarmonyRadarProps> = ({
 
       {/* Axis Labels & Synergy Bulletins */}
       {!compact && (
-        <div style={{ marginTop: '0.75rem', borderTop: '1px solid var(--border)', paddingTop: '0.75rem' }}>
+        <div style={{ marginTop: '0.75rem', borderTop: '1px solid var(--outline-variant)', paddingTop: '0.75rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem' }}>
             {breakdown.map((d, idx) => (
               <div
@@ -229,13 +229,13 @@ export const RoommateHarmonyRadar: React.FC<RoommateHarmonyRadarProps> = ({
                   alignItems: 'center',
                   gap: '0.35rem',
                   fontSize: '0.6875rem',
-                  color: d.aligned ? '#1E6B3A' : 'var(--text-muted)',
+                  color: d.aligned ? 'var(--md-sys-color-success)' : 'var(--on-surface-variant)',
                 }}
               >
                 {d.aligned ? (
-                  <CheckCircle size={10} color="#1E6B3A" />
+                  <CheckCircle size={10} color="var(--md-sys-color-success)" />
                 ) : (
-                  <AlertTriangle size={10} color="#8A5A00" />
+                  <AlertTriangle size={10} color="var(--md-sys-color-warning)" />
                 )}
                 <span>{d.label}</span>
               </div>
