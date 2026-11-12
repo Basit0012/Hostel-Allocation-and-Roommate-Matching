@@ -1,6 +1,8 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { MotionConfig } from 'motion/react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { Layout } from './components/layout/Layout';
 import { Spinner } from './components/common/Spinner';
 
@@ -38,53 +40,57 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 export const App: React.FC = () => {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Layout>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/hostels" element={<HostelsPage />} />
-              <Route path="/hostels/:id" element={<HostelDetailPage />} />
-              <Route path="/rooms" element={<RoomCatalogPage />} />
-              
-              {/* Protected Routes */}
-              <Route
-                path="/roommates"
-                element={
-                  <ProtectedRoute>
-                    <RoommatesPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/apply"
-                element={
-                  <ProtectedRoute>
-                    <ApplyPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <DashboardPage />
-                  </ProtectedRoute>
-                }
-              />
+    <MotionConfig reducedMotion="user">
+      <ThemeProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/hostels" element={<HostelsPage />} />
+                  <Route path="/hostels/:id" element={<HostelDetailPage />} />
+                  <Route path="/rooms" element={<RoomCatalogPage />} />
 
-              {/* Auth Routes */}
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
+                  {/* Protected Routes */}
+                  <Route
+                    path="/roommates"
+                    element={
+                      <ProtectedRoute>
+                        <RoommatesPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/apply"
+                    element={
+                      <ProtectedRoute>
+                        <ApplyPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <DashboardPage />
+                      </ProtectedRoute>
+                    }
+                  />
 
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Suspense>
-        </Layout>
-      </AuthProvider>
-    </BrowserRouter>
+                  {/* Auth Routes */}
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+
+                  {/* Fallback */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Suspense>
+            </Layout>
+          </AuthProvider>
+        </BrowserRouter>
+      </ThemeProvider>
+    </MotionConfig>
   );
 };
 

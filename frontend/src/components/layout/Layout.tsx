@@ -1,20 +1,17 @@
 import React from 'react';
-import { Navbar } from './Navbar';
+import { AppShell } from './Navbar';
 import { Footer } from './Footer';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '100vh',
-        backgroundColor: 'var(--bg)',
-      }}
-    >
-      <Navbar />
-      <main style={{ flex: 1, padding: '2rem 0' }}>{children}</main>
+    <AppShell>
+      <main
+        className="m3-main-with-rail"
+        style={{ flex: 1 }}
+      >
+        {children}
+      </main>
       <Footer />
-    </div>
+    </AppShell>
   );
 };
